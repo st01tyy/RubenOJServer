@@ -27,11 +27,11 @@ public class UserEntity
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long userID;
 
-    @Column(unique = true, length = 16, nullable = false)
+    @Column(length = 16, nullable = false)
     private String username;    //限长8-16位
 
     @Column(nullable = false)
-    private String password;    //MD5加密
+    private String password;    //PasswordEncoder加密
 
     @Column(nullable = false)
     private Role role;  //default value = Role.USER
