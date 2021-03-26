@@ -5,17 +5,20 @@ import edu.bistu.rojserver.dao.repository.UserRepository;
 import edu.bistu.rojserver.domain.RegisterForm;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.util.Optional;
 
 @Slf4j
 @Service
-public class UserService
+public class UserService implements UserDetailsService
 {
     private final UserRepository userRepository;
 
@@ -46,5 +49,18 @@ public class UserService
         userEntity.setUsername(validatedUsername);
         userEntity.setPassword(passwordEncoder.encode(validatedPassword));
         return userEntity;
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException
+    {
+        log.info("loadUserByUsername(" + s + ")");
+        Optional<UserEntity> result = userRepository.findUserEntityByUsername(s);
+        if(result.isEmpty())
+        {
+            log.info("result is empty");
+            throw new UsernameNotFoundException("未找到名为：" + s + "的用户");
+        }
+        return result.get();
     }
 }

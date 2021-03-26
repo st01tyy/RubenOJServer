@@ -34,7 +34,10 @@ public class RegisterController
     {
         Object registerForm = model.getAttribute("registerForm");
         if(!(registerForm instanceof RegisterForm))
+        {
+            log.info("creating new registerForm");
             model.addAttribute("registerForm", new RegisterForm());
+        }
         return "template_register";
     }
 

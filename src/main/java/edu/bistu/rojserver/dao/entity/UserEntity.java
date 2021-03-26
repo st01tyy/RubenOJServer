@@ -2,14 +2,19 @@ package edu.bistu.rojserver.dao.entity;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
+import java.util.Collection;
+import java.util.Collections;
 
 @Getter
 @Setter
 @Entity(name = "user_information")
 @Table(indexes = @Index(columnList = "username, password"))
-public class UserEntity
+public class UserEntity implements UserDetails
 {
     enum Role
     {
@@ -39,5 +44,35 @@ public class UserEntity
     public UserEntity()
     {
         role = Role.USER;
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities()
+    {
+        return Collections.singletonList(new SimpleGrantedAuthority(role.name()));
+    }
+
+    @Override
+    public boolean isAccountNonExpired()
+    {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked()
+    {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired()
+    {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled()
+    {
+        return true;
     }
 }
