@@ -12,9 +12,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.ModelAndView;
 
 import javax.validation.Valid;
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @Controller
@@ -42,7 +45,7 @@ public class RegisterController
     }
 
     @PostMapping
-    public String processRegisterRequest(@Valid @ModelAttribute("registerForm") RegisterForm registerForm, Errors errors)
+    public ModelAndView processRegisterRequest(@Valid @ModelAttribute("registerForm") RegisterForm registerForm, Errors errors)
     {
         log.info("processing new register request");
         if(errors.hasErrors())
@@ -52,20 +55,22 @@ public class RegisterController
             {
                 log.info("error field name: " + error.getField());
             }
-            return "template_register";
+            return new ModelAndView("template_register");
         }
         try
         {
             userService.registerNewUser(registerForm);
             log.info("valid register request");
-            return "redirect:/";
+            Map<String, Boolean> map = new HashMap<>();
+            map.put("fromRegister", true);
+            return new ModelAndView("redirect:/login", map);
         }
         catch (IllegalArgumentException | SQLIntegrityConstraintViolationException e)
         {
             log.info("invalid register request");
             registerForm.setRegisterFailed(true);
             registerForm.setErrorMessage(e.getMessage());
-            return "template_register";
+            return new ModelAndView("template_register");
         }
     }
 }
