@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--suppress CssUnusedSymbol -->
-<html lang="zh">
+<html lang="zh" xmlns:th="http://www.w3.org/1999/xhtml" xmlns:sec="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
     <title>Ruben Online Judge</title>
@@ -15,10 +15,15 @@
                 <h5 class="text-end fw-light">算法竞赛在线判题平台</h5>
             </div>
         </div>
-        <div class="col-lg-auto align-self-center">
-            <a href="/login">登录</a>
+        <div th:unless="${#authorization.expression('isAuthenticated()')}" class="col-lg-auto align-self-center">
+            <a th:href="@{/login}">登录</a>
             |
-            <a href="/register">注册</a>
+            <a th:href="@{/register}">注册</a>
+        </div>
+        <div th:if="${#authorization.expression('isAuthenticated()')}" class="col-lg-auto align-self-center">
+            <a th:href="@{/}" sec:authentication="name">Undefined</a>
+            |
+            <a href="javascript:logout()">登出</a>
         </div>
     </div>
 </div>
@@ -28,7 +33,7 @@
             <div class="collapse navbar-collapse">
                 <ul class="navbar-nav">
                     <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="#">主页</a>
+                        <a class="nav-link active" aria-current="page" th:href="@{/}">主页</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#">题库</a>
@@ -41,6 +46,20 @@
         </div>
     </nav>
 </div>
+<form th:if="${#authorization.expression('isAuthenticated()')}" id="logout_form" th:action="@{/logout}" method="post"></form>
+<div th:if="${showWelcome != null || showGoodBye != null}" class="toast fade hide position-fixed bottom-0 end-0 align-items-center bg-primary text-white" id="toast" style="margin-bottom: 2rem;" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true">
+    <div class="align-items-center">
+        <div class="d-flex">
+            <div class="toast-body" th:if="${showWelcome}" th:text="'欢迎，'+${#authentication.name}">
+                Undefined
+            </div>
+            <div class="toast-body" th:if="${showGoodBye}">
+                再见
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js" integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0" crossorigin="anonymous"></script>
 </body>
 <style>
@@ -48,4 +67,18 @@
         color: black;
     }
 </style>
+<script>
+    let toast = document.getElementById("toast")
+    if(toast != null)
+    {
+        let real_toast = new bootstrap.Toast(toast)
+        real_toast.show()
+    }
+    function logout()
+    {
+        let logout_form = document.getElementById("logout_form")
+        if(logout_form != null)
+            logout_form.submit()
+    }
+</script>
 </html>

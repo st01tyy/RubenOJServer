@@ -65,7 +65,7 @@
         <div class="col-4"><p></p></div>
     </div>
 </div>
-<div class="toast fade show position-fixed bottom-0 end-0 align-items-center bg-light" role="alert" aria-live="assertive" aria-atomic="true">
+<div class="toast fade hide position-fixed bottom-0 end-0 align-items-center bg-light" id="register_succeed" style="margin-bottom: 2rem;" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true">
     <div class="align-items-center">
         <div class="d-flex">
             <div class="toast-body">
@@ -83,9 +83,8 @@
     }
 </style>
 <script type="text/javascript">
-    let toastElList = [].slice.call(document.querySelectorAll('.toast'))
-    toastElList.map(function (toastEl) {
-        return new bootstrap.Toast(toastEl)
-    })
+    let register_succeed = document.getElementById("register_succeed")
+    let toast = new bootstrap.Toast(register_succeed)
+    toast.show()
 </script>
 </html>

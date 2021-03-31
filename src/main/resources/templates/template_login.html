@@ -16,9 +16,9 @@
             </div>
         </div>
         <div class="col-lg-auto align-self-center">
-            <a>登录</a>
+            <a th:href="@{/login}">登录</a>
             |
-            <a href="/register">注册</a>
+            <a th:href="@{/register}">注册</a>
         </div>
     </div>
 </div>
@@ -28,7 +28,7 @@
             <div class="collapse navbar-collapse">
                 <ul class="navbar-nav">
                     <li class="nav-item">
-                        <a class="nav-link" href="#">主页</a>
+                        <a class="nav-link" th:href="@{/}" href="#">主页</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#">题库</a>
@@ -65,6 +65,16 @@
         <div class="col-4"><p></p></div>
     </div>
 </div>
+<div th:if="${fromRegister}" class="toast fade hide position-fixed bottom-0 end-0 align-items-center bg-primary text-white" id="register_succeed" style="margin-bottom: 2rem;" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true">
+    <div class="align-items-center">
+        <div class="d-flex">
+            <div class="toast-body">
+                注册成功
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js" integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0" crossorigin="anonymous"></script>
 </body>
 <style>
@@ -72,4 +82,12 @@
         color: black;
     }
 </style>
+<script type="text/javascript">
+    let register_succeed = document.getElementById("register_succeed")
+    if(register_succeed != null)
+    {
+        let toast = new bootstrap.Toast(register_succeed)
+        toast.show()
+    }
+</script>
 </html>

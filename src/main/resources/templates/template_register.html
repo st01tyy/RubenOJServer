@@ -16,9 +16,9 @@
             </div>
         </div>
         <div class="col-lg-auto align-self-center">
-            <a>登录</a>
+            <a th:href="@{/login}">登录</a>
             |
-            <a href="/register">注册</a>
+            <a th:href="@{/register}">注册</a>
         </div>
     </div>
 </div>
@@ -28,7 +28,7 @@
             <div class="collapse navbar-collapse">
                 <ul class="navbar-nav">
                     <li class="nav-item">
-                        <a class="nav-link" href="#">主页</a>
+                        <a class="nav-link" th:href="@{/}">主页</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#">题库</a>

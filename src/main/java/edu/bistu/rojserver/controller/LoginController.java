@@ -16,7 +16,18 @@ public class LoginController
     {
         Object val = session.getAttribute(WebAttributes.AUTHENTICATION_EXCEPTION);
         if(val != null)
+        {
             model.addAttribute("loginFailed", true);
+            return "template_login";
+        }
+        val = session.getAttribute("fromRegister");
+        if(val instanceof Boolean)
+        {
+            Boolean fromRegister = (Boolean) val;
+            if(fromRegister)
+                model.addAttribute("fromRegister", true);
+            session.removeAttribute("fromRegister");
+        }
         return "template_login";
     }
 }
