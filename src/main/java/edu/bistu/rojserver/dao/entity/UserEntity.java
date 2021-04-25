@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import javax.persistence.*;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 @Getter
 @Setter
@@ -40,6 +41,9 @@ public class UserEntity implements UserDetails
 
     @Column(nullable = false)
     private Role role;  //default value = Role.USER
+
+    @OneToMany
+    private List<ProblemEntity> problemList;
 
     public UserEntity()
     {

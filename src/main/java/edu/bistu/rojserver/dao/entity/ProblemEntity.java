@@ -1,53 +1,51 @@
 package edu.bistu.rojserver.dao.entity;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.util.List;
 
-@Getter
-@Setter
+@Data
+@NoArgsConstructor
 @Entity(name = "problems")
 public class ProblemEntity
 {
-    enum Difficulty
+    enum Status
     {
-        BASIC("基础"), EASY("简单"), MEDIUM("中等"), HARD("困难"), ULTRA("非常难");
-
-        private final String name;
-
-        Difficulty(String name)
-        {
-            this.name = name;
-        }
-
-        public String getName()
-        {
-            return name;
-        }
+        UNREADY, READY, IN_CONTEST, PUBLIC
     }
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long problemID;
 
-    @Column(length = 16)
+    @Column(nullable = false)
     private String title;
 
-    private String description;
+    @Column(nullable = false, columnDefinition = "text")
+    private String content; //output of rich text editor
 
-    private Integer timeLimit;  //Time Unit: Second
+    @Column(nullable = false)
+    private Integer timeLimit;  //UNIT: second
 
-    private Integer memoryLimit;    //Unit: MB
+    @Column(nullable = false)
+    private Integer memoryLimit;    //UNIT: KB
 
-    private Boolean limitLanguage;  //default value is false
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private Boolean limitLanguage;
 
-    private Difficulty difficulty;
+    private Integer difficulty;
+
+    @Column(nullable = false)
+    private Status status = Status.UNREADY;
+
+    @ManyToOne
+    private UserEntity author;
 
     @OneToMany
-    private List<LanguageEntity> supportedLanguages;    //if limitLanguage is true, this value works
+    private List<TestCaseEntity> caseList;
 
     @ManyToMany
-    private List<ProblemTagEntity> tags;
+    private List<TagEntity> tagList;
 }

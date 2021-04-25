@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<!--suppress CssUnusedSymbol -->
+<html lang="zh" xmlns:th="http://www.w3.org/1999/xhtml" xmlns:sec="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>添加判题语言</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+</head>
+<body>
+<div class="container" style="margin-top: 1rem; margin-bottom: 0.5rem;">
+    <div class="row justify-content-between">
+        <div class="col-lg-auto">
+            <div>
+                <h3 style="margin-bottom: 3px;">Ruben Online Judge</h3>
+                <h5 class="text-end fw-light">算法竞赛在线判题平台</h5>
+            </div>
+        </div>
+        <div th:unless="${#authorization.expression('isAuthenticated()')}" class="col-lg-auto align-self-center">
+            <a th:href="@{/login}">登录</a>
+            |
+            <a th:href="@{/register}">注册</a>
+        </div>
+        <div th:if="${#authorization.expression('isAuthenticated()')}" class="col-lg-auto align-self-center">
+            <a th:href="@{/}" sec:authentication="name">Undefined</a>
+            |
+            <a href="javascript:logout()">登出</a>
+        </div>
+    </div>
+</div>
+<div class="container" style="margin-top: 0.5rem;">
+    <nav class="navbar navbar-expand-lg border border-dark rounded">
+        <div class="container-fluid">
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link custom-nav-link" th:href="@{/}">主页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link custom-nav-link" href="#">题库</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link custom-nav-link" href="#">竞赛</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
+<div class="container" style="margin-top: 15px;">
+    <p class="fw-bold text-center">填写下方表格以添加编程语言</p>
+    <div class="row">
+        <div class="col-3">
+            <div class="alert alert-info" role="alert">
+                <h4 class="alert-heading">提示</h4>
+                <p>本系统支持以下命令替换变量：</p>
+                <ol class="list-group list-group-numbered">
+                    <li class="list-group-item d-flex justify-content-between align-items-start">
+                        <div class="ms-2 me-auto">
+                            <div class="fw-bold">${app1}</div>
+                            应用程序1的绝对路径，一般指代编译程序（如gcc, g++等）
+                        </div>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-start">
+                        <div class="ms-2 me-auto">
+                            <div class="fw-bold">${app2}</div>
+                            应用程序2的绝对路径，一般指代解释程序或虚拟机（如java）
+                        </div>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-start">
+                        <div class="ms-2 me-auto">
+                            <div class="fw-bold">${source}</div>
+                            不包含文件类型后缀的源代码文件名
+                        </div>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-start">
+                        <div class="ms-2 me-auto">
+                            <div class="fw-bold">${workspace}</div>
+                            源代码、样例文件等所在位置
+                        </div>
+                    </li>
+                </ol>
+                <hr>
+                <p class="mb-0">涉及文件路径时，必须引用${workspace}变量以指明路径！</p>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="border border-primary rounded" style="padding: 10px;">
+                <h5 class="border-bottom border-secondary" style="padding-bottom: 5px;">添加新的编程语言</h5>
+                <form style="padding: 7px;" method="post" th:action="@{/language_management/add_language}" th:object="${language}">
+                    <div class="mb-3">
+                        <label for="language_name" class="form-label fw-bold">名称（必填）</label>
+                        <input th:field="*{name}" type="text" class="form-control" id="language_name" maxlength="32" placeholder="GNU GCC" required/>
+                    </div>
+                    <div class="mb-3">
+                        <label for="compile_command" class="form-label fw-bold">编译命令</label>
+                        <input th:field="*{compileCommand}" type="text" class="form-control" id="compile_command" maxlength="256" placeholder="${app1} ${workspace}/${source}.c -o ${workspace}/compiled_source"/>
+                    </div>
+                    <div class="mb-3">
+                        <label for="execute_command" class="form-label fw-bold">运行命令（必填）</label>
+                        <input th:field="*{executeCommand}" type="text" class="form-control" id="execute_command" maxlength="256" required placeholder="${workspace}/compiled_source"/>
+                    </div>
+                    <div th:if="${failed}" th:text="${message}" class="alert alert-danger" role="alert">
+                        报错信息
+                    </div>
+                    <div class="d-flex justify-content-center">
+                        <button class="btn btn-primary" type="submit">提交</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="col-3"><p></p></div>
+    </div>
+</div>
+<form th:if="${#authorization.expression('isAuthenticated()')}" id="logout_form" th:action="@{/logout}" method="post"></form>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js" integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0" crossorigin="anonymous"></script>
+</body>
+<style>
+    .container {
+        max-width: 1200px;
+    }
+    .nav-link {
+        color: black!important;
+    }
+    .custom-nav-link  {
+        padding: .25rem .1rem;
+        border-color: rgb(59 89 152)!important;
+    }
+</style>
+<script>
+    function logout()
+    {
+        let logout_form = document.getElementById("logout_form")
+        if(logout_form != null)
+            logout_form.submit()
+    }
+</script>
+</html>

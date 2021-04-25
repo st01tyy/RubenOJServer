@@ -1,15 +1,12 @@
 package edu.bistu.rojserver.dao.entity;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
 
-@Getter
-@Setter
+@Data
+@NoArgsConstructor
 @Entity(name = "languages")
 public class LanguageEntity
 {
@@ -17,9 +14,11 @@ public class LanguageEntity
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long languageID;
 
-    private String languageName;
+    @Column(nullable = false, unique = true)
+    private String name;
 
-    private String languageVerifyCommand;
+    private String compileCommand;
 
-    private String languageVerifyResult;
+    @Column(nullable = false)
+    private String executeCommand;
 }
