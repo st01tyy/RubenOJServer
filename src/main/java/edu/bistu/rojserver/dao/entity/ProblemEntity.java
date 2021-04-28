@@ -20,7 +20,7 @@ public class ProblemEntity
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long problemID;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 32)
     private String title;
 
     @Column(nullable = false, columnDefinition = "text")
@@ -33,7 +33,7 @@ public class ProblemEntity
     private Integer memoryLimit;    //UNIT: KB
 
     @Column(nullable = false, columnDefinition = "boolean default false")
-    private Boolean limitLanguage;
+    private Boolean limitLanguage = false;
 
     private Integer difficulty;
 

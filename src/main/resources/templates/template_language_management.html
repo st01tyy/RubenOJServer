@@ -52,7 +52,10 @@
             <a class="nav-link fs-6 fw-bold" th:href="@{/user_info}" sec:authentication="name">用户名</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link active fs-6 fw-bold" aria-current="page" href="#" style="background-color: #b9b9b9">判题语言管理</a>
+            <a class="nav-link fs-6 fw-bold" th:href="@{/problem_management}">题库管理</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active fs-6 fw-bold" aria-current="page" th:href="@{/language_management}" style="background-color: #b9b9b9">判题语言管理</a>
         </li>
     </ul>
 </div>

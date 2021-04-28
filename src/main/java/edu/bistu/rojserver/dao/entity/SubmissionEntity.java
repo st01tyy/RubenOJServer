@@ -30,10 +30,13 @@ public class SubmissionEntity
     private String result;  //Accepted, Wrong Answer...
 
     @Column(nullable = false, columnDefinition = "boolean default false")
-    private Boolean testSubmission; //验题
+    private Boolean testSubmission = false; //验题
 
     @Column(nullable = false, columnDefinition = "boolean default false")
-    private Boolean contestSubmission;
+    private Boolean contestSubmission = false;
+
+    @ManyToOne
+    private ProblemEntity problemEntity;
 
     @ManyToOne
     private LanguageEntity languageEntity;

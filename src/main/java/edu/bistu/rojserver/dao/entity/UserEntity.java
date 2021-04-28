@@ -45,6 +45,9 @@ public class UserEntity implements UserDetails
     @OneToMany
     private List<ProblemEntity> problemList;
 
+    @OneToMany
+    private List<SubmissionEntity> submissionList;
+
     public UserEntity()
     {
         role = Role.USER;

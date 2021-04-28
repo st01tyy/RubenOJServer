@@ -27,6 +27,7 @@
     </body>
     </html>
 </div>
+<button onclick="nmsl()">123</button>
 </body>
 <script>
     let test = document.getElementById("test").contentWindow.document
@@ -34,5 +35,13 @@
     test.open()
     test.write(a)
     test.close()
+
+    function nmsl(){
+        let test1 = document.getElementById("test").contentWindow.document
+        let a1 = document.getElementById("a").innerHTML
+        test.open()
+        test.write(a1)
+        test.close()
+    }
 </script>
 </html>

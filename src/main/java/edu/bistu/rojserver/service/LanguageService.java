@@ -2,13 +2,16 @@ package edu.bistu.rojserver.service;
 
 import edu.bistu.rojserver.dao.entity.LanguageEntity;
 import edu.bistu.rojserver.dao.repository.LanguageRepository;
+import edu.bistu.rojserver.domain.jsonmodel.Language;
 import edu.bistu.rojserver.property.KafkaProperty;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -63,5 +66,21 @@ public class LanguageService
             languageRepository.delete(languageEntity);
             return "创建topic失败";
         }
+    }
+
+    public List<Language> getLanguagesByNames(List<String> nameList)
+    {
+        List<Language> languageList = new ArrayList<>();
+        for(String name : nameList)
+        {
+            Optional<LanguageEntity> optional = languageRepository.findLanguageEntityByName(name);
+            if(optional.isPresent())
+            {
+                LanguageEntity languageEntity = optional.get();
+                languageList.add(
+                        new Language(name, "LANGUAGE-" + languageEntity.getLanguageID(), languageEntity.getCompileCommand(), languageEntity.getExecuteCommand()));
+            }
+        }
+        return languageList;
     }
 }

@@ -9,6 +9,9 @@ import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.util.matcher.RequestMatcher;
+
+import javax.servlet.http.HttpServletRequest;
 
 @Configuration
 @EnableWebSecurity
@@ -34,19 +37,23 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter
     @Override
     protected void configure(HttpSecurity http) throws Exception
     {
-        //http.authorizeRequests().antMatchers("/", "/register").permitAll();
         http
                 .authorizeRequests()
                 .antMatchers("/", "/login", "/register")
                 .permitAll()
                 .and()
+                .csrf()
+                .ignoringAntMatchers("")
+                .disable()
                 .formLogin()
                 .loginPage("/login")
                 .loginProcessingUrl("/authentication")
                 .defaultSuccessUrl("/").failureUrl("/login")
                 .and()
                 .logout()
-                .logoutSuccessUrl("/post_logout");
+                .logoutSuccessUrl("/post_logout")
+                .and()
+                .headers().frameOptions().disable();
     }
 
     @Override
