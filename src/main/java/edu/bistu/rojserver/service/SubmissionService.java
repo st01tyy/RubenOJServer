@@ -49,7 +49,13 @@ public class SubmissionService
             submissionEntity.setResult(judgeResult.getResult());
             submissionEntity.setExecutionTime(judgeResult.getExecutionTime());
             submissionEntity.setMemoryUsage(judgeResult.getMemoryUsage());
-            submissionRepository.saveAndFlush(submissionEntity);
+            submissionEntity = submissionRepository.save(submissionEntity);
+
+            if(submissionEntity.getResult().equals("Accepted") && submissionEntity.getProblemEntity().getStatus() == ProblemEntity.Status.UNREADY)
+            {
+                submissionEntity.getProblemEntity().setStatus(ProblemEntity.Status.READY);
+                problemRepository.save(submissionEntity.getProblemEntity());
+            }
         }
     }
 
@@ -71,6 +77,9 @@ public class SubmissionService
         submissionEntity.setProblemEntity(problemEntity);
         submissionEntity.setAuthor(author);
         submissionEntity.setLanguageEntity(languageEntity);
+        submissionEntity.setResult("Waiting");
+        if(problemEntity.getStatus().compareTo(ProblemEntity.Status.IN_CONTEST) < 0)
+            submissionEntity.setTestSubmission(true);
 
         Long time = System.currentTimeMillis();
         submissionEntity.setSubmitDate(time);
@@ -92,7 +101,8 @@ public class SubmissionService
         submission.setSubmitTime(time);
         submission.setLanguageName(submitForm.getLanguage());
         submission.setArr(submitForm.getSourceFile().getBytes());
-        submission.setSourceFileName(str);
+        submission.setSourceFileName(submitForm.getSourceFile().getOriginalFilename());
+        submission.setSourceName(getFileNameWithoutPostFix(str));
         submission.setProblemID(submitForm.getProblemID());
 
         kafkaTemplate.send(topicName, submission);
@@ -105,7 +115,7 @@ public class SubmissionService
     }
 
     private String getFileNameWithoutPostFix(String name)
-    {/*
+    {
         int i;
         for(i = name.length() - 1; i > 0; i--)
         {
@@ -114,7 +124,6 @@ public class SubmissionService
         }
         if(i == 0)
             return name;
-        return name.substring(0, i);*/
-        return name;
+        return name.substring(0, i);
     }
 }

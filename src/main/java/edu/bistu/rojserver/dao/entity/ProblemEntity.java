@@ -11,9 +11,9 @@ import java.util.List;
 @Entity(name = "problems")
 public class ProblemEntity
 {
-    enum Status
+    public enum Status
     {
-        UNREADY, READY, IN_CONTEST, PUBLIC
+        EDITING, UNREADY, READY, IN_CONTEST, PUBLIC
     }
 
     @Id
@@ -38,7 +38,7 @@ public class ProblemEntity
     private Integer difficulty;
 
     @Column(nullable = false)
-    private Status status = Status.UNREADY;
+    private Status status = Status.EDITING;
 
     @ManyToOne
     private UserEntity author;

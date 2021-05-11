@@ -14,6 +14,7 @@ public class Submission implements Serializable
     private Long submissionID;
     private Long problemID;
     private Long submitTime;
+    private String sourceName;
     private String sourceFileName;
     private String languageName;
     private byte[] arr;

@@ -1,5 +1,6 @@
 package edu.bistu.rojserver.controller;
 
+import edu.bistu.rojserver.dao.ProblemTableItem;
 import edu.bistu.rojserver.dao.entity.LanguageEntity;
 import edu.bistu.rojserver.dao.entity.ProblemEntity;
 import edu.bistu.rojserver.dao.entity.UserEntity;
@@ -15,10 +16,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -34,6 +35,32 @@ public class ProblemController
 
     @Resource
     private SubmissionService submissionService;
+
+    @GetMapping("/list")
+    public String showProblemListPage(@RequestParam(name = "page", required = false) Integer page, Model model)
+    {
+        log.info("request page: " + page);
+        int pageCount = problemService.getProblemTablePageCount();
+        log.info("page count: " + pageCount);
+        if(pageCount == 0)
+        {
+            model.addAttribute("pageCount", pageCount);
+            model.addAttribute("problems", new ArrayList<>(0));
+        }
+        else
+        {
+            page = (page == null) ? 1 : page;
+            page = (page > pageCount) ? pageCount : page;
+            log.info("valid page: " + page);
+            List<ProblemTableItem> problems;
+            problems = problemService.getProblemTableItems(page);
+            model.addAttribute("currentPage", page);
+            model.addAttribute("pageCount", pageCount);
+            model.addAttribute("problems", problems);
+            model.addAttribute("pages", problemService.getProblemTablePages(page, pageCount));
+        }
+        return "template_problem_list";
+    }
 
     @GetMapping
     public String showProblemPage(@RequestParam(name = "id") Long problemID, Model model, HttpServletResponse response)

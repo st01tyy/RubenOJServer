@@ -39,4 +39,12 @@ public class TestCaseService
         }
         return cases;
     }
+
+    public TestCaseEntity getTestCaseEntityByCaseID(Long caseID)
+    {
+        Optional<TestCaseEntity> optional = testCaseRepository.findById(caseID);
+        if(optional.isEmpty())
+            return null;
+        return optional.get();
+    }
 }

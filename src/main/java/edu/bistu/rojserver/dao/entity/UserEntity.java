@@ -17,7 +17,7 @@ import java.util.List;
 @Table(indexes = @Index(columnList = "username, password"))
 public class UserEntity implements UserDetails
 {
-    enum Role
+    public enum Role
     {
         /**
          * USER = 做题，参赛

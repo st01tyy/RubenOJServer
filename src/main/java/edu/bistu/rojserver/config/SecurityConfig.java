@@ -43,7 +43,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter
                 .permitAll()
                 .and()
                 .csrf()
-                .ignoringAntMatchers("")
                 .disable()
                 .formLogin()
                 .loginPage("/login")

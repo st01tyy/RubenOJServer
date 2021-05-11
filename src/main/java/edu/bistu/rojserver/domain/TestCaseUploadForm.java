@@ -12,16 +12,16 @@ import java.io.*;
 public class TestCaseUploadForm
 {
     private Long problemID;
-    private MultipartFile input;
-    private MultipartFile output;
+    private MultipartFile inputFile;
+    private MultipartFile outputFile;
 
     public TestCaseEntity convertToEntity() throws IOException
     {
         TestCaseEntity testCaseEntity = new TestCaseEntity();
-        testCaseEntity.setInputFileName(input.getOriginalFilename());
-        testCaseEntity.setInput(input.getBytes());
-        testCaseEntity.setOutputFileName(output.getOriginalFilename());
-        testCaseEntity.setOutput(output.getBytes());
+        testCaseEntity.setInputFileName(inputFile.getOriginalFilename());
+        testCaseEntity.setInput(inputFile.getBytes());
+        testCaseEntity.setOutputFileName(outputFile.getOriginalFilename());
+        testCaseEntity.setOutput(outputFile.getBytes());
         return testCaseEntity;
     }
 }
