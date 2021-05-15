@@ -36,7 +36,7 @@
                         <a class="nav-link custom-nav-link" th:href="@{/}">主页</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link custom-nav-link" href="#">题库</a>
+                        <a class="nav-link custom-nav-link" th:href="@{/problem/list}">题库</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link custom-nav-link" href="#">竞赛</a>
@@ -61,11 +61,11 @@
             </thead>
             <tbody>
             <tr th:each="submission : ${submissions}">
-                <th scope="row" th:text="${submission.submissionID}">1</th>
+                <th name="id" scope="row" th:text="${submission.submissionID}">1</th>
                 <td><a class="link-dark" href="#" th:text="${submission.problemEntity.title}">11111111111111111111111111111111</a></td>
-                <td th:text="${(submission.executionTime != null) ? submission.executionTime + ' ms' : '--'}"></td>
-                <td th:text="${(submission.memoryUsage != null) ? submission.memoryUsage + ' KB' : '--'}"></td>
-                <td th:text="${submission.result}"></td>
+                <td name="time" th:text="${(submission.executionTime != null) ? submission.executionTime + ' ms' : '--'}"></td>
+                <td name="memory" th:text="${(submission.memoryUsage != null) ? submission.memoryUsage + ' KB' : '--'}"></td>
+                <td name="result" th:text="${submission.result}"></td>
             </tr>
             </tbody>
         </table>
@@ -73,6 +73,64 @@
 </div>
 <form th:if="${#authorization.expression('isAuthenticated()')}" id="logout_form" th:action="@{/logout}" method="post"></form>
 <script type="text/javascript" th:src="@{/bootstrap-5.0.0-beta3-dist/js/bootstrap.min.js}"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script type="text/javascript">
+    const arr_id = document.getElementsByName('id')
+    const arr_result = document.getElementsByName('result')
+    const arr_time = document.getElementsByName('time')
+    const arr_memory = document.getElementsByName('memory')
+
+
+
+    const interval_id = setInterval("fetch()", 1000)
+
+    function fetch()
+    {
+        let map_index = new Map()
+        for(let i = 0; i < arr_result.length; i++)
+        {
+            if(arr_result[i].innerText === 'Waiting')
+                map_index.set(parseInt(arr_id[i].innerText), i)
+        }
+        if(map_index.size === 0)
+            window.clearInterval(interval_id)
+        else
+        {
+            let arr = new Array(map_index.size)
+            let i = 0
+            map_index.forEach(function (value, key) {
+                arr[i] = {
+                    submissionID : key
+                }
+                i++
+            })
+            console.log(arr)
+            axios.post('/submission/auto_fetch', arr)
+                .then(function (response){
+                let res = response.data
+                console.log(res)
+                let arr_res = res
+                for(let j = 0; j < arr_res.length; j++)
+                {
+                    arr_result[map_index.get(arr_res[j].submissionID)].innerText = arr_res[j].result
+                    arr_time[map_index.get(arr_res[j].submissionID)].innerText = arr_res[j].time
+                    arr_memory[map_index.get(arr_res[j].submissionID)].innerText = arr_res[j].memory
+                }
+                })
+                .catch(function (error){
+                    console.log(error)
+                    window.clearInterval(interval_id)
+                })
+        }
+    }
+
+    function logout()
+    {
+        let logout_form = document.getElementById("logout_form")
+        if(logout_form != null)
+            logout_form.submit()
+    }
+</script>
 </body>
 <style>
     .container {
@@ -86,12 +144,4 @@
         border-color: rgb(59 89 152)!important;
     }
 </style>
-<script>
-    function logout()
-    {
-        let logout_form = document.getElementById("logout_form")
-        if(logout_form != null)
-            logout_form.submit()
-    }
-</script>
 </html>

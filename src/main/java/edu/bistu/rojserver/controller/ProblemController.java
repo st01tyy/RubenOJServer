@@ -49,7 +49,7 @@ public class ProblemController
         }
         else
         {
-            page = (page == null) ? 1 : page;
+            page = (page == null || page < 1) ? 1 : page;
             page = (page > pageCount) ? pageCount : page;
             log.info("valid page: " + page);
             List<ProblemTableItem> problems;

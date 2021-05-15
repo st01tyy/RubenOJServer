@@ -11,6 +11,6 @@ public class KafkaProperty
 {
     private String server;
     private String location;     //.../kafka/bin/windows;
-    private boolean windows;   //kafka CLIENT operating system
+    private boolean windows = false;   //kafka CLIENT operating system
     private int defaultPartitionNumber = 3;
 }

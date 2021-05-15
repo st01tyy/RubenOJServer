@@ -93,8 +93,8 @@
             </a>
         </li>
         <li class="page-item" name="item" th:each="page : ${pages}">
-            <a class="page-link" th:if="${page == currentPage}" th:href="@{'problem/list?page=' + ${page}}" th:text="${page}"></a>
-            <a class="page-link" th:unless="${page == currentPage}" th:href="@{'problem/list?page=' + ${page}}" th:text="${page}"></a>
+            <a class="page-link" th:if="${page == currentPage}" th:href="@{'/problem/list?page=' + ${page}}" th:text="${page}"></a>
+            <a class="page-link" th:unless="${page == currentPage}" th:href="@{'/problem/list?page=' + ${page}}" th:text="${page}"></a>
         </li>
         <li class="page-item">
             <a class="page-link" th:href="@{'/problem/list?page=' + ${(currentPage + 1 <= pageCount) ? currentPage + 1 : pageCount}}">

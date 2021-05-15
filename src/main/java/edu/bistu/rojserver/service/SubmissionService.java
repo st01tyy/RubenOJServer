@@ -8,6 +8,8 @@ import edu.bistu.rojserver.dao.repository.LanguageRepository;
 import edu.bistu.rojserver.dao.repository.ProblemRepository;
 import edu.bistu.rojserver.dao.repository.SubmissionRepository;
 import edu.bistu.rojserver.dao.repository.UserRepository;
+import edu.bistu.rojserver.domain.SubmissionFetchForm;
+import edu.bistu.rojserver.domain.SubmissionFetchResult;
 import edu.bistu.rojserver.domain.SubmitForm;
 import edu.bistu.rojserver.domain.jsonmodel.JudgeResult;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -125,5 +127,20 @@ public class SubmissionService
         if(i == 0)
             return name;
         return name.substring(0, i);
+    }
+
+    public SubmissionFetchResult[] fetchResults(SubmissionFetchForm[] arr)
+    {
+        SubmissionFetchResult[] result = new SubmissionFetchResult[arr.length];
+        for(int i = 0; i < arr.length; i++)
+        {
+            SubmissionEntity submissionEntity = submissionRepository.findById(arr[i].getSubmissionID()).orElse(null);
+            result[i] = new SubmissionFetchResult();
+            result[i].setSubmissionID(arr[i].getSubmissionID());
+            result[i].setResult((submissionEntity == null) ? "Submission Not Found" : submissionEntity.getResult());
+            result[i].setTime((submissionEntity == null || submissionEntity.getExecutionTime() == null) ? "--" : submissionEntity.getExecutionTime() + " ms");
+            result[i].setMemory((submissionEntity == null || submissionEntity.getMemoryUsage() == null) ? "--" : submissionEntity.getMemoryUsage() + " KB");
+        }
+        return result;
     }
 }
