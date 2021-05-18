@@ -1,8 +1,11 @@
 package edu.bistu.rojserver.controller;
 
+import edu.bistu.rojserver.dao.DownloadFile;
 import edu.bistu.rojserver.dao.entity.ProblemEntity;
 import edu.bistu.rojserver.dao.entity.TestCaseEntity;
+import edu.bistu.rojserver.dao.entity.TestCaseFileEntity;
 import edu.bistu.rojserver.dao.entity.UserEntity;
+import edu.bistu.rojserver.exceptions.InternalDataException;
 import edu.bistu.rojserver.exceptions.TestCaseNotFoundException;
 import edu.bistu.rojserver.exceptions.UnAuthorizedException;
 import edu.bistu.rojserver.service.ProblemService;
@@ -30,49 +33,42 @@ public class TestCaseDownloadController
     private ProblemService problemService;
 
     @GetMapping("/input")
-    public ResponseEntity<byte[]> downloadInputFile(@AuthenticationPrincipal UserEntity userEntity, @RequestParam(name = "caseID") Long caseID) throws TestCaseNotFoundException, UnAuthorizedException
+    public ResponseEntity<byte[]> downloadInputFile(@AuthenticationPrincipal UserEntity userEntity, @RequestParam(name = "caseID") Long caseID) throws TestCaseNotFoundException, UnAuthorizedException, InternalDataException
     {
-        TestCaseEntity testCaseEntity = testCaseService.getTestCaseEntityByCaseID(caseID);
-        if(testCaseEntity == null)
+        if(!testCaseService.isTestCaseExist(caseID))
             throw new TestCaseNotFoundException();
 
-        if(!hasPermissionOnProblem(userEntity, testCaseEntity.getProblemEntity().getProblemID()))
+        if(!testCaseService.hasPermissionOnTestCase(userEntity, caseID))
             throw new UnAuthorizedException();
 
-        ContentDisposition contentDisposition = ContentDisposition.attachment().filename(testCaseEntity.getInputFileName(), StandardCharsets.UTF_8).build();
+        DownloadFile file = testCaseService.downloadInput(caseID);
+
+        ContentDisposition contentDisposition = ContentDisposition.attachment().filename(file.getFileName(), StandardCharsets.UTF_8).build();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
         headers.setContentDisposition(contentDisposition);
 
-        return ResponseEntity.ok().headers(headers).body(testCaseEntity.getInput());
+        return ResponseEntity.ok().headers(headers).body(file.getFile());
     }
 
     @GetMapping("/output")
-    public ResponseEntity<byte[]> downloadOutputFile(@AuthenticationPrincipal UserEntity userEntity, @RequestParam(name = "caseID") Long caseID) throws TestCaseNotFoundException, UnAuthorizedException
+    public ResponseEntity<byte[]> downloadOutputFile(@AuthenticationPrincipal UserEntity userEntity, @RequestParam(name = "caseID") Long caseID) throws TestCaseNotFoundException, UnAuthorizedException, InternalDataException
     {
-        TestCaseEntity testCaseEntity = testCaseService.getTestCaseEntityByCaseID(caseID);
-        if(testCaseEntity == null)
+        if(!testCaseService.isTestCaseExist(caseID))
             throw new TestCaseNotFoundException();
 
-        if(!hasPermissionOnProblem(userEntity, testCaseEntity.getProblemEntity().getProblemID()))
+        if(!testCaseService.hasPermissionOnTestCase(userEntity, caseID))
             throw new UnAuthorizedException();
 
-        ContentDisposition contentDisposition = ContentDisposition.attachment().filename(testCaseEntity.getOutputFileName(), StandardCharsets.UTF_8).build();
+        DownloadFile file = testCaseService.downloadOutput(caseID);
+
+        ContentDisposition contentDisposition = ContentDisposition.attachment().filename(file.getFileName(), StandardCharsets.UTF_8).build();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
         headers.setContentDisposition(contentDisposition);
 
-        return ResponseEntity.ok().headers(headers).body(testCaseEntity.getOutput());
-    }
-
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    private boolean hasPermissionOnProblem(UserEntity userEntity, Long problemID)
-    {
-        if(userEntity.getRole() == UserEntity.Role.USER)
-            return false;
-        ProblemEntity problemEntity = problemService.getProblemByID(problemID);
-        return userEntity.getRole() != UserEntity.Role.PROBLEM_AUTHOR || userEntity.getUserID().equals(problemEntity.getAuthor().getUserID());
+        return ResponseEntity.ok().headers(headers).body(file.getFile());
     }
 }

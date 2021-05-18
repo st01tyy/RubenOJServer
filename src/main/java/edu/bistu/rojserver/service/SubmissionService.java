@@ -1,20 +1,18 @@
 package edu.bistu.rojserver.service;
 
-import edu.bistu.rojserver.dao.entity.LanguageEntity;
-import edu.bistu.rojserver.dao.entity.ProblemEntity;
-import edu.bistu.rojserver.dao.entity.SubmissionEntity;
-import edu.bistu.rojserver.dao.entity.UserEntity;
-import edu.bistu.rojserver.dao.repository.LanguageRepository;
-import edu.bistu.rojserver.dao.repository.ProblemRepository;
-import edu.bistu.rojserver.dao.repository.SubmissionRepository;
-import edu.bistu.rojserver.dao.repository.UserRepository;
+import edu.bistu.rojserver.dao.ProblemStatus;
+import edu.bistu.rojserver.dao.entity.*;
+import edu.bistu.rojserver.dao.repository.*;
 import edu.bistu.rojserver.domain.SubmissionFetchForm;
 import edu.bistu.rojserver.domain.SubmissionFetchResult;
 import edu.bistu.rojserver.domain.SubmitForm;
 import edu.bistu.rojserver.domain.jsonmodel.JudgeResult;
+import edu.bistu.rojserver.exceptions.SubmissionCreateException;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import shared.Submission;
+import shared.SubmissionResult;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -30,6 +28,9 @@ public class SubmissionService
 
     @Resource
     private SubmissionRepository submissionRepository;
+
+    @Resource
+    private SubmissionFileRepository submissionFileRepository;
 
     @Resource
     private UserRepository userRepository;
@@ -53,15 +54,16 @@ public class SubmissionService
             submissionEntity.setMemoryUsage(judgeResult.getMemoryUsage());
             submissionEntity = submissionRepository.save(submissionEntity);
 
-            if(submissionEntity.getResult().equals("Accepted") && submissionEntity.getProblemEntity().getStatus() == ProblemEntity.Status.UNREADY)
+            if(submissionEntity.getResult() == SubmissionResult.Accepted && submissionEntity.getProblemStatus() == ProblemStatus.UNREADY)
             {
-                submissionEntity.getProblemEntity().setStatus(ProblemEntity.Status.READY);
+                submissionEntity.getProblemEntity().setProblemStatus(ProblemStatus.READY);
                 problemRepository.save(submissionEntity.getProblemEntity());
             }
         }
     }
 
-    public Long createSubmission(UserEntity author, SubmitForm submitForm) throws IOException
+    @Transactional(rollbackFor = Exception.class)
+    public Long createSubmission(UserEntity author, SubmitForm submitForm) throws SubmissionCreateException, IOException
     {
         Optional<ProblemEntity> optional = problemRepository.findByProblemID(submitForm.getProblemID());
         if(optional.isEmpty())
@@ -74,37 +76,53 @@ public class SubmissionService
         Optional<LanguageEntity> optionalLanguageEntity = languageRepository.findLanguageEntityByName(submitForm.getLanguage());
         if(optionalLanguageEntity.isEmpty())
             return null;
+
         LanguageEntity languageEntity = optionalLanguageEntity.get();
+
         SubmissionEntity submissionEntity = new SubmissionEntity();
         submissionEntity.setProblemEntity(problemEntity);
         submissionEntity.setAuthor(author);
         submissionEntity.setLanguageEntity(languageEntity);
-        submissionEntity.setResult("Waiting");
-        if(problemEntity.getStatus().compareTo(ProblemEntity.Status.IN_CONTEST) < 0)
-            submissionEntity.setTestSubmission(true);
-
-        Long time = System.currentTimeMillis();
-        submissionEntity.setSubmitDate(time);
-        String str = getFileNameWithoutPostFix(Objects.requireNonNull(submitForm.getSourceFile().getOriginalFilename()));
-        submissionEntity.setSourceFileName(str);
-        submissionEntity.setSource(submitForm.getSourceFile().getBytes());
-
-        submissionEntity = submissionRepository.saveAndFlush(submissionEntity);
+        submissionEntity.setProblemStatus(problemEntity.getProblemStatus());
+        submissionEntity.setSubmitTime(System.currentTimeMillis());
+        submissionEntity.setSourceFileName(submitForm.getSourceFile().getOriginalFilename());
+        try
+        {
+            submissionEntity = submissionRepository.saveAndFlush(submissionEntity);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            throw new SubmissionCreateException();
+        }
 
         if(submissionEntity.getSubmissionID() == null)
-            return null;
+            throw new SubmissionCreateException();
 
-        author.getSubmissionList().add(submissionEntity);
-        userRepository.save(author);
+        byte[] source = submitForm.getSourceFile().getBytes();
+        SubmissionFileEntity submissionFileEntity = new SubmissionFileEntity();
+        submissionFileEntity.setSubmissionID(submissionEntity.getSubmissionID());
+        submissionFileEntity.setSource(source);
+        submissionFileEntity.setSourceFileName(submissionEntity.getSourceFileName());
+        try
+        {
+            submissionFileRepository.saveAndFlush(submissionFileEntity);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            throw new SubmissionCreateException();
+        }
+
 
         String topicName = "LANGUAGE-" + languageEntity.getLanguageID();
         Submission submission = new Submission();
         submission.setSubmissionID(submissionEntity.getSubmissionID());
-        submission.setSubmitTime(time);
+        submission.setSubmitTime(submissionEntity.getSubmitTime());
         submission.setLanguageName(submitForm.getLanguage());
         submission.setArr(submitForm.getSourceFile().getBytes());
         submission.setSourceFileName(submitForm.getSourceFile().getOriginalFilename());
-        submission.setSourceName(getFileNameWithoutPostFix(str));
+        submission.setSourceName(getFileNameWithoutPostFix(Objects.requireNonNull(submitForm.getSourceFile().getOriginalFilename())));
         submission.setProblemID(submitForm.getProblemID());
 
         kafkaTemplate.send(topicName, submission);
@@ -137,7 +155,7 @@ public class SubmissionService
             SubmissionEntity submissionEntity = submissionRepository.findById(arr[i].getSubmissionID()).orElse(null);
             result[i] = new SubmissionFetchResult();
             result[i].setSubmissionID(arr[i].getSubmissionID());
-            result[i].setResult((submissionEntity == null) ? "Submission Not Found" : submissionEntity.getResult());
+            result[i].setResult((submissionEntity == null) ? "Submission Not Found" : submissionEntity.getResult().getResultName());
             result[i].setTime((submissionEntity == null || submissionEntity.getExecutionTime() == null) ? "--" : submissionEntity.getExecutionTime() + " ms");
             result[i].setMemory((submissionEntity == null || submissionEntity.getMemoryUsage() == null) ? "--" : submissionEntity.getMemoryUsage() + " KB");
         }

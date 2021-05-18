@@ -5,6 +5,7 @@ import edu.bistu.rojserver.dao.entity.LanguageEntity;
 import edu.bistu.rojserver.dao.entity.ProblemEntity;
 import edu.bistu.rojserver.dao.entity.UserEntity;
 import edu.bistu.rojserver.domain.SubmitForm;
+import edu.bistu.rojserver.exceptions.SubmissionCreateException;
 import edu.bistu.rojserver.service.LanguageService;
 import edu.bistu.rojserver.service.ProblemService;
 import edu.bistu.rojserver.service.SubmissionService;
@@ -79,7 +80,7 @@ public class ProblemController
     }
 
     @PostMapping("/submit")
-    public String processSubmission(@AuthenticationPrincipal UserEntity userEntity, SubmitForm submitForm) throws IOException
+    public String processSubmission(@AuthenticationPrincipal UserEntity userEntity, SubmitForm submitForm) throws SubmissionCreateException, IOException
     {
         Long id = submissionService.createSubmission(userEntity, submitForm);
         log.info("created submission id = " + id);

@@ -7,6 +7,7 @@ import edu.bistu.rojserver.domain.TestCaseCreateForm;
 import edu.bistu.rojserver.domain.TestCaseDeleteForm;
 import edu.bistu.rojserver.domain.TestCaseUploadForm;
 import edu.bistu.rojserver.exceptions.ProblemNotFoundException;
+import edu.bistu.rojserver.exceptions.TestCaseCreateException;
 import edu.bistu.rojserver.exceptions.TestCaseNotFoundException;
 import edu.bistu.rojserver.exceptions.UnAuthorizedException;
 import edu.bistu.rojserver.service.ProblemService;
@@ -98,7 +99,7 @@ public class ProblemManagementController
     }
 
     @PostMapping("/create_testcase")
-    public String createTestCase(@AuthenticationPrincipal UserEntity userEntity, TestCaseCreateForm form) throws ProblemNotFoundException, UnAuthorizedException
+    public String createTestCase(@AuthenticationPrincipal UserEntity userEntity, TestCaseCreateForm form) throws ProblemNotFoundException, UnAuthorizedException, TestCaseCreateException
     {
         ProblemEntity problemEntity = problemService.getProblemByID(form.getProblemID());
         if(problemEntity == null)
@@ -112,7 +113,7 @@ public class ProblemManagementController
     }
 
     @PostMapping("/upload_testcase")
-    public String uploadTestCase(@AuthenticationPrincipal UserEntity userEntity, TestCaseUploadForm form) throws IOException, ProblemNotFoundException, UnAuthorizedException
+    public String uploadTestCase(@AuthenticationPrincipal UserEntity userEntity, TestCaseUploadForm form) throws IOException, ProblemNotFoundException, UnAuthorizedException, TestCaseCreateException
     {
         ProblemEntity problemEntity = problemService.getProblemByID(form.getProblemID());
         if(problemEntity == null)

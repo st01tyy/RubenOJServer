@@ -5,16 +5,13 @@ import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
 import javax.persistence.*;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 @Getter
 @Setter
 @Entity(name = "user_information")
-@Table(indexes = @Index(columnList = "username, password"))
 public class UserEntity implements UserDetails
 {
     public enum Role
@@ -30,28 +27,18 @@ public class UserEntity implements UserDetails
     }
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
     private Long userID;
 
-    @Column(length = 16, nullable = false)
+    @Column(unique = true, length = 16)
     private String username;    //限长8-16位
 
     @Column(nullable = false)
     private String password;    //PasswordEncoder加密
 
     @Column(nullable = false)
-    private Role role;  //default value = Role.USER
-
-    @OneToMany
-    private List<ProblemEntity> problemList;
-
-    @OneToMany
-    private List<SubmissionEntity> submissionList;
-
-    public UserEntity()
-    {
-        role = Role.USER;
-    }
+    private Role role = Role.USER;  //default value = Role.USER
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities()

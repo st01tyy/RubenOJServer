@@ -1,23 +1,19 @@
 package edu.bistu.rojserver.dao.entity;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
+import edu.bistu.rojserver.dao.ProblemStatus;
+import lombok.Getter;
+import lombok.Setter;
 import javax.persistence.*;
-import java.util.List;
 
-@Data
-@NoArgsConstructor
-@Entity(name = "problems")
+@Getter
+@Setter
+@Entity(name = "problem")
+@Table(indexes = @Index(name = "index_problem_status", columnList = "problem_status"))
 public class ProblemEntity
 {
-    public enum Status
-    {
-        EDITING, UNREADY, READY, IN_CONTEST, PUBLIC
-    }
-
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "problem_id")
     private Long problemID;
 
     @Column(nullable = false, length = 32)
@@ -26,26 +22,22 @@ public class ProblemEntity
     @Column(nullable = false, columnDefinition = "text")
     private String content; //output of rich text editor
 
-    @Column(nullable = false)
+    @Column(nullable = false, name = "time_limit")
     private Integer timeLimit;  //UNIT: second
 
-    @Column(nullable = false)
+    @Column(nullable = false, name = "memory_limit")
     private Integer memoryLimit;    //UNIT: KB
 
-    @Column(nullable = false, columnDefinition = "boolean default false")
+    @Column(nullable = false, name = "limit_language")
     private Boolean limitLanguage = false;
 
-    private Integer difficulty;
-
     @Column(nullable = false)
-    private Status status = Status.EDITING;
+    private Integer difficulty = 1200;
+
+    @Column(nullable = false, name = "problem_status")
+    private ProblemStatus problemStatus = ProblemStatus.EDITING;
 
     @ManyToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "user_id")
     private UserEntity author;
-
-    @OneToMany
-    private List<TestCaseEntity> caseList;
-
-    @ManyToMany
-    private List<TagEntity> tagList;
 }

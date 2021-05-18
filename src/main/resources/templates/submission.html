@@ -65,7 +65,7 @@
                 <td><a class="link-dark" href="#" th:text="${submission.problemEntity.title}">11111111111111111111111111111111</a></td>
                 <td name="time" th:text="${(submission.executionTime != null) ? submission.executionTime + ' ms' : '--'}"></td>
                 <td name="memory" th:text="${(submission.memoryUsage != null) ? submission.memoryUsage + ' KB' : '--'}"></td>
-                <td name="result" th:text="${submission.result}"></td>
+                <td name="result" th:text="${submission.result.getResultName()}"></td>
             </tr>
             </tbody>
         </table>
@@ -89,7 +89,7 @@
         let map_index = new Map()
         for(let i = 0; i < arr_result.length; i++)
         {
-            if(arr_result[i].innerText === 'Waiting')
+            if(arr_result[i].innerText === 'Waiting' || arr_result[i].innerText === 'Running')
                 map_index.set(parseInt(arr_id[i].innerText), i)
         }
         if(map_index.size === 0)

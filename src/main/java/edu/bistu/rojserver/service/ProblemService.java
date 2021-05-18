@@ -1,20 +1,20 @@
 package edu.bistu.rojserver.service;
 
+import edu.bistu.rojserver.dao.ProblemStatus;
 import edu.bistu.rojserver.dao.ProblemTableItem;
-import edu.bistu.rojserver.dao.entity.ProblemEntity;
-import edu.bistu.rojserver.dao.entity.SubmissionEntity;
-import edu.bistu.rojserver.dao.entity.TestCaseEntity;
-import edu.bistu.rojserver.dao.entity.UserEntity;
-import edu.bistu.rojserver.dao.repository.ProblemRepository;
-import edu.bistu.rojserver.dao.repository.SubmissionRepository;
-import edu.bistu.rojserver.dao.repository.TestCaseRepository;
-import edu.bistu.rojserver.dao.repository.UserRepository;
+import edu.bistu.rojserver.dao.entity.*;
+import edu.bistu.rojserver.dao.repository.*;
 import edu.bistu.rojserver.domain.TestCase;
 import edu.bistu.rojserver.domain.TestCaseCreateForm;
 import edu.bistu.rojserver.domain.TestCaseUploadForm;
+import edu.bistu.rojserver.exceptions.SubmissionCreateException;
+import edu.bistu.rojserver.exceptions.TestCaseCreateException;
 import edu.bistu.rojserver.property.WebServerProperty;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import shared.SubmissionResult;
+
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -41,14 +41,17 @@ public class ProblemService
     @Resource
     private WebServerProperty webServerProperty;
 
+    @Resource
+    private TestCaseFileRepository testCaseFileRepository;
+
     public List<ProblemEntity> getProblemsByAuthor(UserEntity author)
     {
-        return problemRepository.getAllByAuthor(author);
+        return problemRepository.findAllByAuthor(author);
     }
 
     public int getProblemTablePageCount()
     {
-        int itemCount = problemRepository.countByStatus(ProblemEntity.Status.PUBLIC);
+        int itemCount = problemRepository.countByProblemStatus(ProblemStatus.PUBLIC);
         if(itemCount == 0)
             return 0;
         int pageCount = itemCount / webServerProperty.getPage_size();
@@ -115,6 +118,7 @@ public class ProblemService
     }
 
     @SuppressWarnings("OptionalGetWithoutIsPresent")
+    @Transactional(rollbackFor = Exception.class)
     public Long editProblem(ProblemEntity problemEntity, UserEntity editor)
     {
         Optional<ProblemEntity> optional = problemRepository.findById((problemEntity.getProblemID() == null) ? 0 : problemEntity.getProblemID());
@@ -132,14 +136,7 @@ public class ProblemService
         if(problemEntity.getAuthor() == null)
         {
             problemEntity.setAuthor(editor);
-            UserEntity userEntity = userRepository.findById(editor.getUserID()).get();
-            List<ProblemEntity> list = userEntity.getProblemList();
-            if(list == null)
-                list = new ArrayList<>(1);
-            list.add(problemEntity);
-            editor.setProblemList(list);
             problemEntity = problemRepository.saveAndFlush(problemEntity);
-            userRepository.saveAndFlush(userEntity);
             return problemEntity.getProblemID();
         }
         else
@@ -151,7 +148,7 @@ public class ProblemService
 
     public List<TestCase> getTestCasesByProblemEntity(ProblemEntity problemEntity)
     {
-        List<TestCaseEntity> list = problemEntity.getCaseList();
+        List<TestCaseEntity> list = testCaseRepository.findAllByProblemEntity(problemEntity);
         List<TestCase> cases = new ArrayList<>(list.size());
         for(TestCaseEntity entity : list)
         {
@@ -160,63 +157,129 @@ public class ProblemService
         return cases;
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public void deleteTestCase(ProblemEntity problemEntity, TestCaseEntity testCaseEntity)
     {
-        problemEntity.getCaseList().removeIf(e -> e.getCaseID().equals(testCaseEntity.getCaseID()));
+        TestCaseFileEntity testCaseFileEntity = new TestCaseFileEntity();
+        testCaseFileEntity.setCaseID(testCaseEntity.getCaseID());
         testCaseRepository.delete(testCaseEntity);
-        problemEntity = problemRepository.saveAndFlush(problemEntity);
-
+        testCaseFileRepository.delete(testCaseFileEntity);
         changeProblemStatusOnDeletingTestCase(problemEntity);
-        problemRepository.saveAndFlush(problemEntity);
+        problemRepository.save(problemEntity);
     }
 
-    public void createNewTestCaseToProblemEntity(ProblemEntity problemEntity, TestCaseCreateForm form)
+    @Transactional(rollbackFor = Exception.class)
+    public void createNewTestCaseToProblemEntity(ProblemEntity problemEntity, TestCaseCreateForm form) throws TestCaseCreateException
     {
         TestCaseEntity testCaseEntity = new TestCaseEntity();
-        testCaseEntity.setInput(form.getNew_input().getBytes(StandardCharsets.UTF_8));
         testCaseEntity.setInputFileName("input.txt");
-        testCaseEntity.setOutput(form.getNew_output().getBytes(StandardCharsets.UTF_8));
+        testCaseEntity.setInputContent(form.getNew_input().substring(0, Math.min(200, form.getNew_input().length())));
         testCaseEntity.setOutputFileName("output.txt");
+        testCaseEntity.setOutputContent(form.getNew_output().substring(0, Math.min(200, form.getNew_output().length())));
         testCaseEntity.setProblemEntity(problemEntity);
-        testCaseEntity = testCaseRepository.saveAndFlush(testCaseEntity);
+        try
+        {
+            testCaseEntity = testCaseRepository.saveAndFlush(testCaseEntity);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            throw new TestCaseCreateException();
+        }
+
+        if(testCaseEntity.getCaseID() == null)
+            throw new TestCaseCreateException();
+
+        TestCaseFileEntity testCaseFileEntity = new TestCaseFileEntity();
+        testCaseFileEntity.setCaseID(testCaseEntity.getCaseID());
+        testCaseFileEntity.setInput(form.getNew_input().getBytes(StandardCharsets.UTF_8));
+        testCaseFileEntity.setOutput(form.getNew_output().getBytes(StandardCharsets.UTF_8));
+        testCaseFileEntity.setInputFileName(testCaseEntity.getInputFileName());
+        testCaseFileEntity.setOutputFileName(testCaseEntity.getOutputFileName());
+        testCaseFileEntity.setProblemEntity(problemEntity);
+        try
+        {
+            testCaseFileRepository.saveAndFlush(testCaseFileEntity);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            throw new TestCaseCreateException();
+        }
 
         changeProblemStatusOnAddingNewTestCase(problemEntity);
-
-        problemEntity.getCaseList().add(testCaseEntity);
-        problemRepository.saveAndFlush(problemEntity);
+        problemRepository.save(problemEntity);
     }
 
-    public void uploadTestCaseToProblemEntity(ProblemEntity problemEntity, TestCaseUploadForm form) throws IOException
+    @Transactional(rollbackFor = Exception.class)
+    public void uploadTestCaseToProblemEntity(ProblemEntity problemEntity, TestCaseUploadForm form) throws IOException, TestCaseCreateException
     {
-        TestCaseEntity testCaseEntity = form.convertToEntity();
+        byte[] input = form.getInputFile().getBytes();
+        byte[] output = form.getOutputFile().getBytes();
+        TestCaseEntity testCaseEntity = new TestCaseEntity();
+        testCaseEntity.setInputFileName(form.getInputFile().getOriginalFilename());
+        testCaseEntity.setInputContent(fromByteArray(input));
+        testCaseEntity.setOutputFileName(form.getOutputFile().getOriginalFilename());
+        testCaseEntity.setOutputContent(fromByteArray(output));
         testCaseEntity.setProblemEntity(problemEntity);
-        testCaseEntity = testCaseRepository.saveAndFlush(testCaseEntity);
+        try
+        {
+            testCaseEntity = testCaseRepository.saveAndFlush(testCaseEntity);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            throw new TestCaseCreateException();
+        }
+
+        TestCaseFileEntity testCaseFileEntity = new TestCaseFileEntity();
+        testCaseFileEntity.setCaseID(testCaseEntity.getCaseID());
+        testCaseFileEntity.setInput(input);
+        testCaseFileEntity.setOutput(output);
+        testCaseFileEntity.setInputFileName(testCaseEntity.getInputFileName());
+        testCaseFileEntity.setOutputFileName(testCaseEntity.getOutputFileName());
+        testCaseFileEntity.setProblemEntity(problemEntity);
+        try
+        {
+            testCaseFileRepository.saveAndFlush(testCaseFileEntity);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            throw new TestCaseCreateException();
+        }
 
         changeProblemStatusOnAddingNewTestCase(problemEntity);
-
-        problemEntity.getCaseList().add(testCaseEntity);
         problemRepository.save(problemEntity);
+    }
+
+    private String fromByteArray(byte[] arr)
+    {
+        StringBuilder sb = new StringBuilder(new String(arr, 0, Math.min(arr.length, 200), StandardCharsets.UTF_8));    //默认不含中文等多字节文字
+        if(sb.length() == 200)
+            sb.append("...");
+        return sb.toString();
     }
 
     private void changeProblemStatusOnDeletingTestCase(ProblemEntity problemEntity)
     {
-        if(problemEntity.getStatus() == ProblemEntity.Status.UNREADY || problemEntity.getStatus() == ProblemEntity.Status.READY)
+        if(problemEntity.getProblemStatus() == ProblemStatus.UNREADY || problemEntity.getProblemStatus() == ProblemStatus.READY)
         {
-            if(problemEntity.getCaseList() == null || problemEntity.getCaseList().isEmpty())
-                problemEntity.setStatus(ProblemEntity.Status.EDITING);
+            if(testCaseRepository.countByProblemEntity(problemEntity) == 0)
+                problemEntity.setProblemStatus(ProblemStatus.EDITING);
             else
-                problemEntity.setStatus(ProblemEntity.Status.UNREADY);
+                problemEntity.setProblemStatus(ProblemStatus.UNREADY);
         }
     }
 
     private void changeProblemStatusOnAddingNewTestCase(ProblemEntity problemEntity)
     {
-        if(problemEntity.getStatus() == ProblemEntity.Status.EDITING)
-            problemEntity.setStatus(ProblemEntity.Status.UNREADY);
-        else if(problemEntity.getStatus() == ProblemEntity.Status.READY)
+        if(problemEntity.getProblemStatus() == ProblemStatus.EDITING)
+            problemEntity.setProblemStatus(ProblemStatus.UNREADY);
+        else if(problemEntity.getProblemStatus() == ProblemStatus.READY)
         {
             expireAllSubmissionsByProblemEntity(problemEntity);
-            problemEntity.setStatus(ProblemEntity.Status.UNREADY);
+            problemEntity.setProblemStatus(ProblemStatus.UNREADY);
         }
     }
 
@@ -226,7 +289,7 @@ public class ProblemService
         List<SubmissionEntity> submissionEntityList = submissionRepository.findAllByProblemEntity(problemEntity);
         for(SubmissionEntity submissionEntity : submissionEntityList)
         {
-            submissionEntity.setResult("Expired");
+            submissionEntity.setResult(SubmissionResult.Expired);
             submissionRepository.save(submissionEntity);
         }
     }

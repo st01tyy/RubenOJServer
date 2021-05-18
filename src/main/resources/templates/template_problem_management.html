@@ -83,9 +83,9 @@
                     <tr th:each="problem : ${problems}">
                         <th scope="row" th:text="${problem.problemID}">1</th>
                         <td><a class="link-dark" th:href="@{'/problem?id=' + ${problem.problemID}}" th:text="${problem.title}">11111111111111111111111111111111</a></td>
-                        <td th:text="${problem.status.name()}">UNREADY</td>
+                        <td th:text="${problem.problemStatus.name()}">UNREADY</td>
                         <td>
-                            <div class="btn-group" th:unless="${problem.status == T(edu.bistu.rojserver.dao.entity.ProblemEntity.Status).PUBLIC}">
+                            <div class="btn-group" th:unless="${problem.problemStatus == T(edu.bistu.rojserver.dao.ProblemStatus).PUBLIC}">
                                 <a th:href="@{'/problem_management/edit_problem?id=' + ${problem.problemID}}" class="btn btn-outline-primary">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
                                         <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
@@ -100,7 +100,7 @@
                                     </svg>
                                     编辑测试样例
                                 </a>
-                                <a th:if="${problem.status == T(edu.bistu.rojserver.dao.entity.ProblemEntity.Status).READY}" th:href="@{'/problem_management/change_status/public?problemID=' + ${problem.problemID}}" class="btn btn-outline-primary">
+                                <a th:if="${problem.problemStatus == T(edu.bistu.rojserver.dao.ProblemStatus).READY}" th:href="@{'/problem_management/change_status/public?problemID=' + ${problem.problemID}}" class="btn btn-outline-primary">
                                     公开
                                 </a>
                             </div>

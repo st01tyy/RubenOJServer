@@ -1,5 +1,6 @@
 package edu.bistu.rojserver.dao.repository;
 
+import edu.bistu.rojserver.dao.ProblemStatus;
 import edu.bistu.rojserver.dao.ProblemTableItem;
 import edu.bistu.rojserver.dao.entity.ProblemEntity;
 import edu.bistu.rojserver.dao.entity.UserEntity;
@@ -12,11 +13,15 @@ import java.util.Optional;
 @Repository
 public interface ProblemRepository extends JpaRepository<ProblemEntity, Long>
 {
-    List<ProblemEntity> getAllByAuthor(UserEntity author);
+    List<ProblemEntity> findAllByAuthor(UserEntity author);
+
     Optional<ProblemEntity> findByProblemID(Long problemID);
 
-    @Query(value = "select problemid as problemID, title as title, difficulty as difficulty, count(distinct submissions.author_userid) as acceptedSubmissionNumber from problems left join submissions on problemid=submissions.problem_entity_problemid and test_submission=0 and result='Accepted'where status=4 group by problemid order by problemID desc limit ?1, ?2", nativeQuery = true)
+    @Query(value = "select problem.problem_id as problemID, title as title, difficulty as difficulty, count(distinct submission.user_id) as acceptedSubmissionNumber from problem left join submission on problem.problem_id = submission.problem_id and submission.problem_status > 2 and result = 7 where problem.problem_status = 4 group by problem.problem_id order by problem.problem_id desc limit ?1, ?2", nativeQuery = true)
     List<ProblemTableItem> findProblemTableItems(int offset, int count);
 
-    int countByStatus(ProblemEntity.Status status);
+    int countByProblemStatus(ProblemStatus problemStatus);
+
+    @Query(value = "select user_id from problem where problem_id = ?1", nativeQuery = true)
+    Long getAuthorID(Long problemID);
 }
