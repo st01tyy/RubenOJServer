@@ -7,6 +7,7 @@ import javax.persistence.*;
 @Getter
 @Setter
 @Entity(name = "language")
+@Table(indexes = @Index(name = "index_name", columnList = "name"))
 public class LanguageEntity
 {
     @Id

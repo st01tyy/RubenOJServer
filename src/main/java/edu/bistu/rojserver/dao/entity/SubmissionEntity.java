@@ -23,6 +23,9 @@ public class SubmissionEntity
     @Column(nullable = false, name = "submit_time")
     private Long submitTime;    //System.currentTimeMillis() after user submit
 
+    @Column(nullable = false, name = "wait_time")
+    private Long waitTime = 0L;  //System.currentTimeMillis() when judge node thread receive the submission.
+
     @Column(nullable = false, name = "judge_time")
     private Long judgeTime = 0L; //System.currentTImeMillis() after judge complete
 

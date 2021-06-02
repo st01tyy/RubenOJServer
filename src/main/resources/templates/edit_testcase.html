@@ -78,27 +78,9 @@
         </tbody>
     </table>
 </div>
-<div class="container">
+<div class="container" style="margin-top: 1rem; margin-bottom: 1rem;">
     <div class="row">
-        <div class="col-7">
-            <div class="container border border-dark rounded" style="margin-top: 1rem; padding: 10px;">
-                <p class="fs-5 fw-bold">添加样例</p>
-                <form>
-                    <div class="mb-3">
-                        <label for="input" class="form-label">输入</label>
-                        <textarea class="form-control" id="input" rows="3"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="output" class="form-label">输出</label>
-                        <textarea class="form-control" id="output" rows="3"></textarea>
-                    </div>
-                    <div class="d-flex justify-content-center">
-                        <input type="submit" class="btn btn-primary" value="提交">
-                    </div>
-                </form>
-            </div>
-        </div>
-        <div class="col-5">
+        <div class="col-6">
             <div class="container border border-dark rounded" style="margin-top: 1rem; padding: 10px;">
                 <p class="fs-5 fw-bold">上传样例</p>
                 <form>
@@ -112,6 +94,63 @@
                     </div>
                     <div class="d-flex justify-content-center">
                         <input type="submit" class="btn btn-primary" value="上传">
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="container border border-dark rounded" style="margin-top: 1rem; padding: 10px;">
+                <p class="fs-5 fw-bold">自定义判题程序</p>
+                <a class="link-primary text-decoration-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cloud-check" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M10.354 6.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7 8.793l2.646-2.647a.5.5 0 0 1 .708 0z"/>
+                        <path d="M4.406 3.342A5.53 5.53 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773 16 11.569 14.502 13 12.687 13H3.781C1.708 13 0 11.366 0 9.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383zm.653.757c-.757.653-1.153 1.44-1.153 2.056v.448l-.445.049C2.064 6.805 1 7.952 1 9.318 1 10.785 2.23 12 3.781 12h8.906C13.98 12 15 10.988 15 9.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 4.825 10.328 3 8 3a4.53 4.53 0 0 0-2.941 1.1z"/>
+                    </svg>
+                    checker.cpp
+                </a>
+                <a class="link-danger text-decoration-none" href="javascript:delete_checker()" style="margin-left: 0.5rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                    </svg>
+                    删除
+                </a>
+                <form id="delete_checker">
+                    <input type="hidden">
+                </form>
+                <form enctype="multipart/form-data" style="margin-top: 0.5rem;">
+                    <div class="mb-3">
+                        <label for="formFile" class="form-label fw-bold">上传源代码</label>
+                        <input class="form-control" type="file" id="formFile">
+                    </div>
+                    <div class="mb-3">
+                        <label for="language" class="form-label fw-bold">选择编程语言</label>
+                        <select id="language" class="form-select form-select-sm mb-3" aria-label=".form-select-lg example">
+                            <option value="1">Undefined</option>
+                        </select>
+                    </div>
+                    <div class="d-flex justify-content-center">
+                        <input type="submit" class="btn btn-primary" value="上传">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="container border border-dark rounded" style="margin-top: 1rem; padding: 10px;">
+                <p class="fs-5 fw-bold">添加样例</p>
+                <form>
+                    <div class="mb-3">
+                        <label for="input" class="form-label">输入</label>
+                        <textarea class="form-control" id="input" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="output" class="form-label">输出</label>
+                        <textarea class="form-control" id="output" rows="3"></textarea>
+                    </div>
+                    <div class="d-flex justify-content-center">
+                        <input type="submit" class="btn btn-primary" value="提交">
                     </div>
                 </form>
             </div>
@@ -155,6 +194,13 @@
         let a = document.getElementById('delete_caseID')
         a.innerText = '您确定要删除样例' + caseID + '吗？'
         modal.show()
+    }
+
+    function delete_checker()
+    {
+        let delete_checker = document.getElementById('delete_checker')
+        if(delete_checker != null)
+            delete_checker.submit()
     }
 </script>
 </body>

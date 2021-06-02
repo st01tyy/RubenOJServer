@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!--suppress CssUnusedSymbol -->
+<!--suppress CssUnusedSymbol, JSUnresolvedVariable, HtmlUnknownAttribute -->
 <html lang="zh" xmlns:th="http://www.w3.org/1999/xhtml" xmlns:sec="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
@@ -60,15 +60,27 @@
             </tr>
             </thead>
             <tbody>
-            <tr th:each="submission : ${submissions}">
-                <th name="id" scope="row" th:text="${submission.submissionID}">1</th>
-                <td><a class="link-dark" href="#" th:text="${submission.problemEntity.title}">11111111111111111111111111111111</a></td>
+            <tr th:each="submission, submissionStat : ${submissions}">
+                <th name="id" scope="row" th:text="${submissionStat.count}">1</th>
+                <td>
+                    <a class="link-dark" th:href="@{'/problem/?id=' + ${submission.problemEntity.getProblemID()}}" th:text="${submission.problemEntity.title}">11111111111111111111111111111111</a>
+                </td>
                 <td name="time" th:text="${(submission.executionTime != null) ? submission.executionTime + ' ms' : '--'}"></td>
                 <td name="memory" th:text="${(submission.memoryUsage != null) ? submission.memoryUsage + ' KB' : '--'}"></td>
                 <td name="result" th:text="${submission.result.getResultName()}"></td>
             </tr>
             </tbody>
         </table>
+        <nav aria-label="Page navigation example">
+            <ul class="pagination justify-content-center">
+                <li class="page-item" th:if="${hasPrevious}">
+                    <a class="page-link" th:href="@{'/submission?page=' + ${page - 1}}">上一页</a>
+                </li>
+                <li class="page-item" th:if="${hasNext}">
+                    <a class="page-link" th:href="@{'/submission?page=' + ${page + 1}}">下一页</a>
+                </li>
+            </ul>
+        </nav>
     </div>
 </div>
 <form th:if="${#authorization.expression('isAuthenticated()')}" id="logout_form" th:action="@{/logout}" method="post"></form>

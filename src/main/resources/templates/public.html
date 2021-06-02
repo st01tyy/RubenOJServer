@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<form th:action="@{/management/problem/public}" method="post" id="form">
+    <input type="hidden" th:value="${problemID}" name="problemID" />
+</form>
+<script type="text/javascript">
+    const form = document.getElementById('form')
+    form.submit()
+</script>
+</body>
+</html>

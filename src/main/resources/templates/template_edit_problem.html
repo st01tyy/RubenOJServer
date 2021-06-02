@@ -32,7 +32,7 @@
     <div class="row" style="height: 100%">
         <div class="col-6" style="height: 100%; padding-right: 0.25rem;">
             <div class="border border-1 border-dark rounded" style="padding: 0.5rem; height: 100%">
-                <form style="padding: 7px;" th:object="${problem}" id="form" method="post" th:action="@{/problem_management/edit_problem}">
+                <form style="padding: 7px;" th:object="${problem}" id="form" method="post" th:action="@{/management/problem/edit_problem}">
                     <input type="hidden" th:field="*{problemID}"/>
                     <div class="mb-3">
                         <label for="title" class="form-label fw-bold">题目标题</label>
@@ -57,26 +57,6 @@
                                 <input th:field="*{timeLimit}" type="number" oninput="preview()" id="time_limit" class="form-control" min="1" max="5" value="1" required>
                                 <span class="input-group-text">秒</span>
                             </div>
-                        </div>
-                    </div>
-                    <div class="row" style="margin-top: 1rem;">
-                        <div class="col-6">
-                            <label for="language_limit" class="form-label fw-bold">语言限制</label>
-                            <select class="form-select" id="language_limit" multiple aria-label="multiple select example">
-                                <option selected>不设限</option>
-                                <!--<option value="1">One</option>
-                                <option value="2">Two</option>
-                                <option value="3">Three</option>-->
-                            </select>
-                        </div>
-                        <div class="col-6">
-                            <label for="tag" class="form-label fw-bold">选择题目标签</label>
-                            <select class="form-select" id="tag" multiple aria-label="multiple select example">
-                                <option selected>无</option>
-                                <!--<option value="1">One</option>
-                                <option value="2">Two</option>
-                                <option value="3">Three</option>-->
-                            </select>
                         </div>
                     </div>
                     <div class="d-flex justify-content-center" style="margin-top: 1rem;">

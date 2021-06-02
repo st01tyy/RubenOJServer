@@ -86,7 +86,7 @@
         <div class="col-6">
             <div class="border border-primary rounded" style="padding: 10px;">
                 <h5 class="border-bottom border-secondary" style="padding-bottom: 5px;">添加新的编程语言</h5>
-                <form style="padding: 7px;" method="post" th:action="@{/language_management/add_language}" th:object="${language}">
+                <form style="padding: 7px;" method="post" th:action="@{/management/language/add_language}" th:object="${language}">
                     <div class="mb-3">
                         <label for="language_name" class="form-label fw-bold">名称（必填）</label>
                         <input th:field="*{name}" type="text" class="form-control" id="language_name" maxlength="32" placeholder="GNU GCC" required/>

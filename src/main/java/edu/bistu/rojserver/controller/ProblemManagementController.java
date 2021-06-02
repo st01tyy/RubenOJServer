@@ -3,13 +3,9 @@ package edu.bistu.rojserver.controller;
 import edu.bistu.rojserver.dao.entity.ProblemEntity;
 import edu.bistu.rojserver.dao.entity.TestCaseEntity;
 import edu.bistu.rojserver.dao.entity.UserEntity;
-import edu.bistu.rojserver.domain.TestCaseCreateForm;
-import edu.bistu.rojserver.domain.TestCaseDeleteForm;
-import edu.bistu.rojserver.domain.TestCaseUploadForm;
-import edu.bistu.rojserver.exceptions.ProblemNotFoundException;
-import edu.bistu.rojserver.exceptions.TestCaseCreateException;
-import edu.bistu.rojserver.exceptions.TestCaseNotFoundException;
-import edu.bistu.rojserver.exceptions.UnAuthorizedException;
+import edu.bistu.rojserver.domain.*;
+import edu.bistu.rojserver.exceptions.*;
+import edu.bistu.rojserver.service.LanguageService;
 import edu.bistu.rojserver.service.ProblemService;
 import edu.bistu.rojserver.service.TestCaseService;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +17,7 @@ import javax.annotation.Resource;
 import java.io.IOException;
 
 @Controller
-@RequestMapping("/problem_management")
+@RequestMapping("/management/problem")
 @Slf4j
 public class ProblemManagementController
 {
@@ -31,11 +27,28 @@ public class ProblemManagementController
     @Resource
     private TestCaseService testCaseService;
 
+    @Resource
+    private LanguageService languageService;
+
     @GetMapping
     public String showProblemManagementPage(@AuthenticationPrincipal UserEntity userEntity, Model model)
     {
         model.addAttribute("problems", problemService.getProblemsByAuthor(userEntity));
         return "template_problem_management";
+    }
+
+    @GetMapping("/public")
+    public String showPublicPage(@RequestParam(name = "id") Long problemID, Model model)
+    {
+        model.addAttribute("problemID", problemID);
+        return "public";
+    }
+
+    @PostMapping("public")
+    public String setProblemStatusPublic(ProblemPublicRequest request)
+    {
+        problemService.setProblemStatusPublic(request.getProblemID());
+        return "redirect:/management/problem";
     }
 
     @GetMapping("/edit_problem")
@@ -65,37 +78,42 @@ public class ProblemManagementController
     {
         Long res = problemService.editProblem(problemEntity, userEntity);
         if(res != null)
-            return "redirect:/problem_management/edit_testcase?problemID=" + res;
+            return "redirect:/management/problem/edit_testcase?problemID=" + res;
         else
-            return "redirect:/problem_management";
+            return "redirect:/management/problem";
     }
 
     @GetMapping("/edit_testcase")
-    public String showEditTestCasePage(@AuthenticationPrincipal UserEntity userEntity, @RequestParam(name = "problemID") Long problemID, Model model) throws UnAuthorizedException
+    public String showEditTestCasePage(@AuthenticationPrincipal UserEntity userEntity, @RequestParam(name = "problemID") Long problemID, Model model) throws UnAuthorizedException, ProblemNotFoundException
     {
-        if(!hasPermissionOnProblem(userEntity, problemID))
+        if(!problemService.isProblemExist(problemID))
+            throw new ProblemNotFoundException();
+
+        ProblemEntity problemEntity = problemService.getProblemIfUserHasPermission(userEntity, problemID);
+        if(problemEntity == null)
             throw new UnAuthorizedException();
 
-        ProblemEntity problemEntity = problemService.getProblemByID(problemID);
         model.addAttribute("title", problemEntity.getTitle());
         model.addAttribute("problemID", problemEntity.getProblemID());
         model.addAttribute("cases", problemService.getTestCasesByProblemEntity(problemEntity));
+        model.addAttribute("checker", problemService.getCheckerByProblemIfExists(problemEntity));
+        model.addAttribute("languages", languageService.getAllLanguages());
         return "template_edit_testcase";
     }
 
     @PostMapping("/delete_testcase")
-    public String deleteTestCase(@AuthenticationPrincipal UserEntity userEntity, TestCaseDeleteForm deleteForm) throws TestCaseNotFoundException, UnAuthorizedException
+    public String deleteTestCase(@AuthenticationPrincipal UserEntity userEntity, TestCaseDeleteForm deleteForm) throws TestCaseNotFoundException, UnAuthorizedException, ProblemNotFoundException
     {
         TestCaseEntity testCaseEntity = testCaseService.getTestCaseEntityByCaseID(deleteForm.getCaseID());
         if(testCaseEntity == null)
             throw new TestCaseNotFoundException();
 
         ProblemEntity problemEntity = testCaseEntity.getProblemEntity();
-        if(!hasPermissionOnProblem(userEntity, problemEntity.getProblemID()))
+        if(!problemService.hasPermissionOnProblem(userEntity, problemEntity.getProblemID()))
             throw new UnAuthorizedException();
 
         problemService.deleteTestCase(problemEntity, testCaseEntity);
-        return "redirect:/problem_management/edit_testcase?problemID=" + problemEntity.getProblemID();
+        return "redirect:/management/problem/edit_testcase?problemID=" + problemEntity.getProblemID();
     }
 
     @PostMapping("/create_testcase")
@@ -105,11 +123,11 @@ public class ProblemManagementController
         if(problemEntity == null)
             throw new ProblemNotFoundException();
 
-        if(!hasPermissionOnProblem(userEntity, problemEntity.getProblemID()))
+        if(!problemService.hasPermissionOnProblem(userEntity, problemEntity.getProblemID()))
             throw new UnAuthorizedException();
 
         problemService.createNewTestCaseToProblemEntity(problemEntity, form);
-        return "redirect:/problem_management/edit_testcase?problemID=" + problemEntity.getProblemID();
+        return "redirect:/management/problem/edit_testcase?problemID=" + problemEntity.getProblemID();
     }
 
     @PostMapping("/upload_testcase")
@@ -119,20 +137,31 @@ public class ProblemManagementController
         if(problemEntity == null)
             throw new ProblemNotFoundException();
 
-        if(!hasPermissionOnProblem(userEntity, problemEntity.getProblemID()))
+        if(!problemService.hasPermissionOnProblem(userEntity, problemEntity.getProblemID()))
             throw new UnAuthorizedException();
 
         log.info("upload()");
         problemService.uploadTestCaseToProblemEntity(problemEntity, form);
-        return "redirect:/problem_management/edit_testcase?problemID=" + problemEntity.getProblemID();
+        return "redirect:/management/problem/edit_testcase?problemID=" + problemEntity.getProblemID();
     }
 
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    private boolean hasPermissionOnProblem(UserEntity userEntity, Long problemID)
+    @PostMapping("/delete_checker")
+    public String deleteChecker(CheckerDeleteForm form) throws InternalDataException
     {
-        if(userEntity.getRole() == UserEntity.Role.USER)
-            return false;
-        ProblemEntity problemEntity = problemService.getProblemByID(problemID);
-        return userEntity.getRole() != UserEntity.Role.PROBLEM_AUTHOR || userEntity.getUserID().equals(problemEntity.getAuthor().getUserID());
+        problemService.deleteChecker(form.getCheckerID());
+        return "redirect:/management/problem/edit_testcase?problemID=" + form.getProblemID();
+    }
+
+    @PostMapping("/upload_checker")
+    public String uploadChecker(@AuthenticationPrincipal UserEntity userEntity, SubmitForm form) throws ProblemNotFoundException, UnAuthorizedException, InternalDataException
+    {
+        if(!problemService.isProblemExist(form.getProblemID()))
+            throw new ProblemNotFoundException();
+
+        if(!problemService.hasPermissionOnProblem(userEntity, form.getProblemID()))
+            throw new UnAuthorizedException();
+
+        problemService.editChecker(form, form.getProblemID(), userEntity);
+        return "redirect:/management/problem/edit_testcase?problemID=" + form.getProblemID();
     }
 }

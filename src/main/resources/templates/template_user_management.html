@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<!--suppress HtmlFormInputWithoutLabel, JSUnusedGlobalSymbols, HtmlUnknownTag -->
+<html lang="zh" xmlns:th="http://www.w3.org/1999/xhtml" xmlns:sec="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>管理用户权限</title>
+    <link th:href="@{/bootstrap-5.0.0-beta3-dist/css/bootstrap.min.css}" rel="stylesheet">
+</head>
+<body>
+<div class="container" style="margin-top: 1rem; margin-bottom: 0.5rem;">
+    <div class="row justify-content-between">
+        <div class="col-lg-auto">
+            <div>
+                <h3 style="margin-bottom: 3px;">Ruben Online Judge</h3>
+                <h5 class="text-end fw-light">算法竞赛在线判题平台</h5>
+            </div>
+        </div>
+        <div th:unless="${#authorization.expression('isAuthenticated()')}" class="col-lg-auto align-self-center">
+            <a th:href="@{/login}">登录</a>
+            |
+            <a th:href="@{/register}">注册</a>
+        </div>
+        <div th:if="${#authorization.expression('isAuthenticated()')}" class="col-lg-auto align-self-center">
+            <a th:href="@{/user_info}" sec:authentication="name">Undefined</a>
+            |
+            <a href="javascript:logout()">登出</a>
+        </div>
+    </div>
+</div>
+<div class="container" style="margin-top: 0.5rem;">
+    <nav class="navbar navbar-expand-lg border border-dark rounded">
+        <div class="container-fluid">
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link custom-nav-link" th:href="@{/}">主页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link custom-nav-link" th:href="@{/problem/list}">题库</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link custom-nav-link" th:href="@{/contest/list}">竞赛</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
+<div class="container" style="margin-top: 1rem;">
+    <ul class="nav nav-pills">
+        <li class="nav-item">
+            <a class="nav-link fs-6 fw-bold" th:href="@{/user_info}" sec:authentication="name"></a>
+        </li>
+        <li class="nav-item" sec:authorize="hasAnyAuthority('ROOT')">
+            <a class="nav-link active fs-6 fw-bold" aria-current="page" th:href="@{/management/permission}" style="background-color: #b9b9b9">用户权限管理</a>
+        </li>
+        <li class="nav-item" sec:authorize="hasAnyAuthority('PROBLEM_AUTHOR', 'CONTEST_ORGANIZER', 'ROOT')">
+            <a class="nav-link fs-6 fw-bold" th:href="@{/management/problem}">题库管理</a>
+        </li>
+        <li class="nav-item" sec:authorize="hasAnyAuthority('ROOT')">
+            <a class="nav-link fs-6 fw-bold" th:href="@{/management/language}">判题语言管理</a>
+        </li>
+    </ul>
+</div>
+<div class="container" style="margin-top: 1rem;">
+    <div class="row">
+        <div class="col-8">
+            <table class="table table-bordered align-middle">
+                <thead>
+                <tr>
+                    <th scope="col" style="width: 10%; text-align: center;">#</th>
+                    <th scope="col" style="width: 40%; text-align: center;">用户名</th>
+                    <th scope="col" style="width: 30%; text-align: center;">权限</th>
+                    <th scope="col" style="width: 20%; text-align: center;">操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="user, userStat : ${userList}">
+                    <th style="text-align: center;" scope="row" th:text="${userStat.count}"></th>
+                    <td th:text="${user.username}" style="text-align: center;"></td>
+                    <input type="hidden" name="table_username" th:value="${user.username}" />
+                    <td>
+                        <select class="form-select form-select-sm" name="table_role" required>
+                            <div th:each="role : ${roleList}">
+                                <option th:if="${role == user.role}" th:value="${role.name()}" th:text="${role.name()}" selected></option>
+                                <option th:unless="${role == user.role}" th:value="${role.name()}" th:text="${role.name()}"></option>
+                            </div>
+                        </select>
+                    </td>
+                    <td>
+                        <div class="d-flex justify-content-center">
+                            <a class="btn btn-outline-primary" th:href="'javascript:change_permission(' + ${userStat.index} + ')'">更改权限</a>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <nav aria-label="Page navigation example">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item" th:if="${hasPrevious}">
+                        <a class="page-link" th:href="@{'/management/permission?page=' + ${page - 1} + ${(roleName == null) ? '' : '&role=' + roleName} + ${(username == null) ? '' : '&username=' + username}}">上一页</a>
+                    </li>
+                    <li class="page-item" th:if="${hasNext}">
+                        <a class="page-link" th:href="@{'/management/permission?page=' + ${page + 1} + ${(roleName == null) ? '' : '&role=' + roleName} + ${(username == null) ? '' : '&username=' + username}}">下一页
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        <div class="col-4">
+            <div class="container border border-dark rounded" style="padding:10px;">
+                <p class="fs-6 fw-bold">根据权限筛选用户</p>
+                <form th:action="@{/management/permission/filter}" method="post">
+                    <select class="form-select form-select-sm" name="role" required>
+                        <div th:each="role : ${roleList}">
+                            <option th:if="${role.name().compareTo((roleName == null) ? '' : roleName) == 0}" th:value="${role.name()}" th:text="${role.name()}" selected></option>
+                            <option th:unless="${role.name().compareTo((roleName == null) ? '' : roleName) == 0}" th:value="${role.name()}" th:text="${role.name()}"></option>
+                        </div>
+                    </select>
+                    <input style="margin-top: 1rem;" type="submit" class="btn btn-outline-primary" value="筛选"/>
+                </form>
+            </div>
+            <div class="container border border-dark rounded" style="margin-top: 1rem; padding:10px;">
+                <p class="fs-6 fw-bold">根据用户名搜索用户</p>
+                <form th:action="@{/management/permission/search}" method="post">
+                    <input type="text" class="form-control" name="username" maxlength="32" th:value="${(username == null) ? '' : username}" required />
+                    <input style="margin-top: 1rem;" type="submit" class="btn btn-outline-primary" value="搜索"/>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<form th:if="${#authorization.expression('isAuthenticated()')}" id="logout_form" th:action="@{/logout}" method="post"></form>
+<form th:action="@{/management/permission/change}" id="form" method="post">
+    <input type="hidden" id="form_username" name="username" />
+    <input type="hidden" id="form_role" name="role" />\
+</form>
+<script type="text/javascript" th:src="@{/bootstrap-5.0.0-beta3-dist/js/bootstrap.min.js}"></script>
+<script type="text/javascript">
+    const arr_table_username = document.getElementsByName('table_username')
+    const arr_table_role = document.getElementsByName('table_role')
+
+    const form_username = document.getElementById('form_username')
+    const form_role = document.getElementById('form_role')
+    const form = document.getElementById('form')
+    function change_permission(index)
+    {
+        form_username.value = arr_table_username[index].value
+        form_role.value = arr_table_role[index].value
+        console.log(form_username.value + " " + form_role.value)
+        form.submit()
+    }
+    function logout()
+    {
+        let logout_form = document.getElementById("logout_form")
+        if(logout_form != null)
+            logout_form.submit()
+    }
+</script>
+</body>
+<style>
+    .container {
+        max-width: 1200px;
+    }
+    .nav-link {
+        color: black!important;
+    }
+    .custom-nav-link  {
+        padding: .25rem .1rem;
+        border-color: rgb(59 89 152)!important;
+    }
+</style>
+</html>

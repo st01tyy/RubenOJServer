@@ -3,8 +3,12 @@ package edu.bistu.rojserver.service;
 import edu.bistu.rojserver.dao.entity.UserEntity;
 import edu.bistu.rojserver.dao.repository.UserRepository;
 import edu.bistu.rojserver.domain.RegisterForm;
+import edu.bistu.rojserver.property.WebServerProperty;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -24,6 +28,9 @@ public class UserService implements UserDetailsService
 
     @Resource
     private PasswordEncoder passwordEncoder;
+
+    @Resource
+    private WebServerProperty webServerProperty;
 
     @Autowired
     public UserService(UserRepository userRepository)
@@ -62,5 +69,26 @@ public class UserService implements UserDetailsService
             throw new UsernameNotFoundException("未找到名为：" + s + "的用户");
         }
         return result.get();
+    }
+
+    public Slice<UserEntity> getUserList(int page, String roleName, String username)
+    {
+        Pageable pageable = PageRequest.of(page, webServerProperty.getPage_size());
+        if(roleName != null)
+            return userRepository.findAllByRoleEquals(pageable, UserEntity.Role.valueOf(roleName));
+        if(username != null)
+            return userRepository.findAllByUsernameLike(pageable, username + "%");
+        return userRepository.findUsers(pageable);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void changeUserRole(String username, String roleName) throws Exception
+    {
+        UserEntity userEntity = userRepository.findUserEntityByUsername(username).orElse(null);
+        if(userEntity == null)
+            return;
+        UserEntity.Role role = UserEntity.Role.valueOf(roleName);
+        userEntity.setRole(role);
+        userRepository.saveAndFlush(userEntity);
     }
 }

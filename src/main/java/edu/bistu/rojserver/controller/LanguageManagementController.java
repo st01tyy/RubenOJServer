@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import javax.annotation.Resource;
 
 @Controller
-@RequestMapping("/language_management")
+@RequestMapping("/management/language")
 @Slf4j
 public class LanguageManagementController
 {
@@ -42,7 +42,7 @@ public class LanguageManagementController
         log.info(languageEntity.getExecuteCommand());
         String str = languageService.addLanguage(languageEntity);
         if(str == null)
-            return "redirect:/language_management";
+            return "redirect:/management/language";
         model.addAttribute("failed", true);
         model.addAttribute("message", str);
         return "template_add_language";

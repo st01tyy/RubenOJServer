@@ -5,6 +5,7 @@ import edu.bistu.rojserver.dao.entity.UserEntity;
 import edu.bistu.rojserver.domain.SubmissionFetchForm;
 import edu.bistu.rojserver.domain.SubmissionFetchResult;
 import edu.bistu.rojserver.service.SubmissionService;
+import org.springframework.data.domain.Slice;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -22,16 +23,13 @@ public class SubmissionPageController
     private SubmissionService submissionService;
 
     @GetMapping
-    public String showSubmissionPage(@AuthenticationPrincipal UserEntity userEntity, Model model)
+    public String showSubmissionPage(@RequestParam(name = "page", required = false) Integer page, @AuthenticationPrincipal UserEntity userEntity, Model model)
     {
-        List<SubmissionEntity> list = submissionService.getSubmissionsByAuthor(userEntity);
-        list.sort((submissionEntity, t1) -> {
-            if(submissionEntity.getSubmissionID() > t1.getSubmissionID())
-                return -1;
-            else
-                return 1;
-        });
-        model.addAttribute("submissions", list);
+        Slice<SubmissionEntity> slice = submissionService.getSubmissionList(page, userEntity);
+        model.addAttribute("submissions", slice.getContent());
+        model.addAttribute("hasPrevious", slice.hasPrevious());
+        model.addAttribute("hasNext", slice.hasNext());
+        model.addAttribute("page", slice.getNumber());
         return "submission";
     }
 

@@ -10,5 +10,6 @@ public interface LanguageRepository extends JpaRepository<LanguageEntity, Long>
 {
     List<LanguageEntity> findAll();
     Optional<LanguageEntity> findLanguageEntityByName(String name);
+    LanguageEntity getByName(String name);
     boolean existsByName(String name);
 }

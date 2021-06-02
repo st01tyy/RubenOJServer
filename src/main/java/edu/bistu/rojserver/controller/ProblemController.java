@@ -5,6 +5,7 @@ import edu.bistu.rojserver.dao.entity.LanguageEntity;
 import edu.bistu.rojserver.dao.entity.ProblemEntity;
 import edu.bistu.rojserver.dao.entity.UserEntity;
 import edu.bistu.rojserver.domain.SubmitForm;
+import edu.bistu.rojserver.domain.TestSubmitForm;
 import edu.bistu.rojserver.exceptions.SubmissionCreateException;
 import edu.bistu.rojserver.service.LanguageService;
 import edu.bistu.rojserver.service.ProblemService;
@@ -13,10 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
+
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -86,4 +85,21 @@ public class ProblemController
         log.info("created submission id = " + id);
         return "redirect:/submission";
     }
+
+    @PostMapping("/submit_load_test")
+    @ResponseBody
+    public boolean loadTest(TestSubmitForm form)
+    {
+        try
+        {
+            submissionService.loadTest(form);
+            return true;
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
 }

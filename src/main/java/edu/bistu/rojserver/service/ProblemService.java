@@ -4,13 +4,16 @@ import edu.bistu.rojserver.dao.ProblemStatus;
 import edu.bistu.rojserver.dao.ProblemTableItem;
 import edu.bistu.rojserver.dao.entity.*;
 import edu.bistu.rojserver.dao.repository.*;
+import edu.bistu.rojserver.domain.SubmitForm;
 import edu.bistu.rojserver.domain.TestCase;
 import edu.bistu.rojserver.domain.TestCaseCreateForm;
 import edu.bistu.rojserver.domain.TestCaseUploadForm;
-import edu.bistu.rojserver.exceptions.SubmissionCreateException;
+import edu.bistu.rojserver.exceptions.InternalDataException;
+import edu.bistu.rojserver.exceptions.ProblemNotFoundException;
 import edu.bistu.rojserver.exceptions.TestCaseCreateException;
 import edu.bistu.rojserver.property.WebServerProperty;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.task.DelegatingSecurityContextAsyncTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import shared.SubmissionResult;
@@ -44,9 +47,60 @@ public class ProblemService
     @Resource
     private TestCaseFileRepository testCaseFileRepository;
 
+    @Resource
+    private CheckerRepository checkerRepository;
+
+    @Resource
+    private LanguageRepository languageRepository;
+
+    @Resource
+    private CheckerFileRepository checkerFileRepository;
+
+    public CheckerEntity getCheckerByProblemIfExists(ProblemEntity problemEntity)
+    {
+        return checkerRepository.findByProblemEntity(problemEntity).orElse(null);
+    }
+
     public List<ProblemEntity> getProblemsByAuthor(UserEntity author)
     {
         return problemRepository.findAllByAuthor(author);
+    }
+
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+    public boolean isProblemExist(Long problemID)
+    {
+        return problemRepository.existsByProblemID(problemID);
+    }
+
+    public ProblemEntity getProblemIfUserHasPermission(UserEntity userEntity, Long problemID)
+    {
+        if(userEntity.getRole() == UserEntity.Role.USER)
+            return null;
+        ProblemEntity problemEntity = problemRepository.getByProblemID(problemID);
+        if(userEntity.getRole() != UserEntity.Role.PROBLEM_AUTHOR || userEntity.getUserID().equals(problemEntity.getAuthor().getUserID()))
+            return problemEntity;
+        else
+            return null;
+    }
+
+    public boolean hasPermissionOnProblem(UserEntity userEntity, Long problemID) throws ProblemNotFoundException
+    {
+        if(userEntity.getRole() == UserEntity.Role.USER)
+            return false;
+        ProblemEntity problemEntity = problemRepository.findByProblemID(problemID).orElse(null);
+        if(problemEntity == null)
+            throw new ProblemNotFoundException();
+        return userEntity.getRole() != UserEntity.Role.PROBLEM_AUTHOR || userEntity.getUserID().equals(problemEntity.getAuthor().getUserID());
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void setProblemStatusPublic(Long problemID)
+    {
+        ProblemEntity problemEntity = problemRepository.findByProblemID(problemID).orElse(null);
+        if(problemEntity == null)
+            return;
+        problemEntity.setProblemStatus(ProblemStatus.PUBLIC);
+        problemRepository.saveAndFlush(problemEntity);
     }
 
     public int getProblemTablePageCount()
@@ -59,6 +113,72 @@ public class ProblemService
             pageCount ++;
         return pageCount;
     }
+
+    /**
+     * 上传自定义判题程序
+     * 调用此方法前必须保证problemID存在且完成权限验证，此方法仅负责写入数据库
+     * @param form  已完成有效性验证的自定义判题程序上传表单
+     * @param problemID 判题程序所属的题目ID，保证其真实存在
+     * @param userEntity    当前用户
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void editChecker(SubmitForm form, Long problemID, UserEntity userEntity) throws InternalDataException
+    {
+        ProblemEntity problemEntity = new ProblemEntity();
+        problemEntity.setProblemID(problemID);
+        CheckerEntity checkerEntity = checkerRepository.findByProblemEntity(problemEntity).orElse(new CheckerEntity());
+        checkerEntity.setFileName(form.getSourceFile().getOriginalFilename());
+        checkerEntity.setUserEntity(userEntity);
+        checkerEntity.setProblemEntity(problemEntity);
+        checkerEntity.setLanguageEntity(languageRepository.getByName(form.getLanguage()));
+        try
+        {
+            if(checkerEntity.getCheckerID() == null)
+            {
+                checkerEntity = checkerRepository.saveAndFlush(checkerEntity);
+                CheckerFileEntity checkerFileEntity = new CheckerFileEntity();
+                checkerFileEntity.setCheckerID(checkerEntity.getCheckerID());
+                checkerFileEntity.setFileName(checkerEntity.getFileName());
+                checkerFileEntity.setArr(form.getSourceFile().getBytes());
+                checkerFileRepository.saveAndFlush(checkerFileEntity);
+            }
+            else
+            {
+                CheckerFileEntity checkerFileEntity = checkerFileRepository.getByCheckerID(checkerEntity.getCheckerID());
+                checkerFileEntity.setFileName(checkerEntity.getFileName());
+                checkerFileEntity.setArr(form.getSourceFile().getBytes());
+                checkerRepository.saveAndFlush(checkerEntity);
+                checkerFileRepository.saveAndFlush(checkerFileEntity);
+            }
+            changeProblemStatusOnEditingChecker(problemID);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            throw new InternalDataException();
+        }
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteChecker(Long checkerID) throws InternalDataException
+    {
+        CheckerEntity checkerEntity = checkerRepository.findByCheckerID(checkerID).orElse(null);
+        if(checkerEntity == null)
+            return;
+        try
+        {
+            ProblemEntity problemEntity = checkerEntity.getProblemEntity();
+            checkerRepository.delete(checkerEntity);
+            changeProblemStatusOnEditingChecker(problemEntity.getProblemID());
+            checkerFileRepository.findById(checkerID).ifPresent(checkerFileEntity -> checkerFileRepository.delete(checkerFileEntity));
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            throw new InternalDataException();
+        }
+    }
+
 
     public List<Integer> getProblemTablePages(int currentPage, int pageCount)
     {
@@ -117,7 +237,6 @@ public class ProblemService
         return optional.orElse(null);
     }
 
-    @SuppressWarnings("OptionalGetWithoutIsPresent")
     @Transactional(rollbackFor = Exception.class)
     public Long editProblem(ProblemEntity problemEntity, UserEntity editor)
     {
@@ -168,6 +287,7 @@ public class ProblemService
         problemRepository.save(problemEntity);
     }
 
+    @SuppressWarnings("DuplicatedCode")
     @Transactional(rollbackFor = Exception.class)
     public void createNewTestCaseToProblemEntity(ProblemEntity problemEntity, TestCaseCreateForm form) throws TestCaseCreateException
     {
@@ -211,6 +331,7 @@ public class ProblemService
         problemRepository.save(problemEntity);
     }
 
+    @SuppressWarnings("DuplicatedCode")
     @Transactional(rollbackFor = Exception.class)
     public void uploadTestCaseToProblemEntity(ProblemEntity problemEntity, TestCaseUploadForm form) throws IOException, TestCaseCreateException
     {
@@ -259,6 +380,17 @@ public class ProblemService
         if(sb.length() == 200)
             sb.append("...");
         return sb.toString();
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    protected void changeProblemStatusOnEditingChecker(Long problemID)
+    {
+        ProblemEntity problemEntity = problemRepository.findByProblemID(problemID).orElse(null);
+        if(problemEntity == null)
+            return;
+        if(problemEntity.getProblemStatus() == ProblemStatus.READY)
+            problemEntity.setProblemStatus(ProblemStatus.UNREADY);
+        problemRepository.saveAndFlush(problemEntity);
     }
 
     private void changeProblemStatusOnDeletingTestCase(ProblemEntity problemEntity)

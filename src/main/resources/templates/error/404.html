@@ -1,9 +1,8 @@
 <!DOCTYPE html>
-<!--suppress CssUnusedSymbol -->
-<html lang="zh" xmlns:sec="http://www.w3.org/1999/xhtml" xmlns:th="http://www.w3.org/1999/xhtml">
+<html lang="zh" xmlns:th="http://www.w3.org/1999/xhtml" xmlns:sec="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
-    <title>判题语言管理</title>
+    <title>出错啦</title>
     <link th:href="@{/bootstrap-5.0.0-beta3-dist/css/bootstrap.min.css}" rel="stylesheet">
 </head>
 <body>
@@ -39,46 +38,26 @@
                         <a class="nav-link custom-nav-link" th:href="@{/problem/list}">题库</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link custom-nav-link" href="#">竞赛</a>
+                        <a class="nav-link custom-nav-link" th:href="@{/contest/list}">竞赛</a>
                     </li>
                 </ul>
             </div>
         </div>
     </nav>
 </div>
-<div class="container" style="margin-top: 1rem;">
-    <ul class="nav nav-pills">
-        <li class="nav-item">
-            <a class="nav-link fs-6 fw-bold" th:href="@{/user_info}" sec:authentication="name">用户名</a>
-        </li>
-        <li class="nav-item" sec:authorize="hasAnyAuthority('ROOT')">
-            <a class="nav-link fs-6 fw-bold" th:href="@{/management/permission}">用户权限管理</a>
-        </li>
-        <li class="nav-item" sec:authorize="hasAnyAuthority('PROBLEM_AUTHOR', 'CONTEST_ORGANIZER', 'ROOT')">
-            <a class="nav-link fs-6 fw-bold" th:href="@{/management/problem}">题库管理</a>
-        </li>
-        <li class="nav-item" sec:authorize="hasAnyAuthority('ROOT')">
-            <a class="nav-link active fs-6 fw-bold" aria-current="page" th:href="@{/management/language}" style="background-color: #b9b9b9">判题语言管理</a>
-        </li>
-    </ul>
-</div>
-<div class="container" style="margin-top: 1rem;">
-    <a type="button" class="btn btn-primary" th:href="@{/management/language/add_language}">添加判题语言</a>
-    <p class="fw-bold" style="margin-top: 0.7rem; margin-bottom: 0.5rem;" th:text="'当前共有' + ${languages.size()} + '种判题语言'">当前共有N种判题语言：</p>
-    <div class="row">
-        <div class="col-sm-3" th:each="language : ${languages}">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title" th:text="${language.name}">语言名称</h5>
-                    <!--<a href="#" class="btn btn-primary">编辑</a>
-                    <a href="#" class="btn btn-danger">删除</a>-->
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="container">
+    <p class="d-flex justify-content-center fs-1 fw-bold text-danger">您想访问的页面不存在</p>
 </div>
 <form th:if="${#authorization.expression('isAuthenticated()')}" id="logout_form" th:action="@{/logout}" method="post"></form>
 <script type="text/javascript" th:src="@{/bootstrap-5.0.0-beta3-dist/js/bootstrap.min.js}"></script>
+<script type="text/javascript">
+    function logout()
+    {
+        let logout_form = document.getElementById("logout_form")
+        if(logout_form != null)
+            logout_form.submit()
+    }
+</script>
 </body>
 <style>
     .container {
@@ -87,21 +66,9 @@
     .nav-link {
         color: black!important;
     }
-    .card {
-        margin-top: 0.5rem;
-        margin-bottom: 0.5rem;
-    }
     .custom-nav-link  {
         padding: .25rem .1rem;
         border-color: rgb(59 89 152)!important;
     }
 </style>
-<script>
-    function logout()
-    {
-        let logout_form = document.getElementById("logout_form")
-        if(logout_form != null)
-            logout_form.submit()
-    }
-</script>
 </html>

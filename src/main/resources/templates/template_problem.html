@@ -55,7 +55,7 @@
             <input type="hidden" id="temp" th:value="${problem.content}" />
             <div id="content" class="rubenoj_content"></div>
         </div>
-        <div class="col-3" th:if="${problem.problemStatus.compareTo(T(edu.bistu.rojserver.dao.ProblemStatus).EDITING) > 0}">
+        <div class="col-3" th:if="${problem.problemStatus.compareTo(T(edu.bistu.rojserver.dao.ProblemStatus).EDITING) > 0}" sec:authorize="isAuthenticated()">
             <form class="border border-dark rounded" method="post" enctype="multipart/form-data" th:action="@{/problem/submit}" style="padding: 10px;">
                 <input type="hidden" name="problemID" th:value="${problemID}" />
                 <div class="mb-3">

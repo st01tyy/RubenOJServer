@@ -6,8 +6,13 @@ import edu.bistu.rojserver.dao.repository.*;
 import edu.bistu.rojserver.domain.SubmissionFetchForm;
 import edu.bistu.rojserver.domain.SubmissionFetchResult;
 import edu.bistu.rojserver.domain.SubmitForm;
+import edu.bistu.rojserver.domain.TestSubmitForm;
 import edu.bistu.rojserver.domain.jsonmodel.JudgeResult;
 import edu.bistu.rojserver.exceptions.SubmissionCreateException;
+import edu.bistu.rojserver.property.WebServerProperty;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +44,9 @@ public class SubmissionService
     private LanguageRepository languageRepository;
 
     @Resource
+    private WebServerProperty webServerProperty;
+
+    @Resource
     private KafkaTemplate<String, Submission> kafkaTemplate;
 
     public void updateSubmissionResult(JudgeResult judgeResult)
@@ -52,6 +60,13 @@ public class SubmissionService
             submissionEntity.setResult(judgeResult.getResult());
             submissionEntity.setExecutionTime(judgeResult.getExecutionTime());
             submissionEntity.setMemoryUsage(judgeResult.getMemoryUsage());
+
+            if(submissionEntity.getResult() == SubmissionResult.Running)
+                submissionEntity.setWaitTime(System.currentTimeMillis());
+
+            else
+                submissionEntity.setJudgeTime(System.currentTimeMillis());
+
             submissionEntity = submissionRepository.save(submissionEntity);
 
             if(submissionEntity.getResult() == SubmissionResult.Accepted && submissionEntity.getProblemStatus() == ProblemStatus.UNREADY)
@@ -59,6 +74,19 @@ public class SubmissionService
                 submissionEntity.getProblemEntity().setProblemStatus(ProblemStatus.READY);
                 problemRepository.save(submissionEntity.getProblemEntity());
             }
+        }
+    }
+
+    public void loadTest(TestSubmitForm submitForm)
+    {
+        UserEntity userEntity = userRepository.findUserEntityByUsername(submitForm.getUsername()).orElse(null);
+        try
+        {
+            createSubmission(userEntity, submitForm);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
         }
     }
 
@@ -132,6 +160,14 @@ public class SubmissionService
     public List<SubmissionEntity> getSubmissionsByAuthor(UserEntity userEntity)
     {
         return submissionRepository.findAllByAuthor(userEntity);
+    }
+
+    public Slice<SubmissionEntity> getSubmissionList(Integer page, UserEntity userEntity)
+    {
+        if(page == null)
+            page = 0;
+        Pageable pageable = PageRequest.of(page, webServerProperty.getPage_size());
+        return submissionRepository.findAllByAuthorOrderBySubmissionIDDesc(userEntity, pageable);
     }
 
     private String getFileNameWithoutPostFix(String name)
