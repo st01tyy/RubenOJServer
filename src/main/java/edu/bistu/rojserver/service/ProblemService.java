@@ -225,6 +225,23 @@ public class ProblemService
         return pages;
     }
 
+    public List<ProblemTableItem> getInContestProblems(long contestID)
+    {
+        return problemRepository.findInContestProblemTableItems(contestID);
+    }
+
+    public List<ProblemEntity> getAvailableProblems()
+    {
+        return problemRepository.findAllByProblemStatus(ProblemStatus.READY);
+    }
+
+    public List<ProblemEntity> getSelectedProblems(Long contestID)
+    {
+        ContestEntity contestEntity = new ContestEntity();
+        contestEntity.setContestID(contestID);
+        return problemRepository.findAllByContestEntity(contestEntity);
+    }
+
     public List<ProblemTableItem> getProblemTableItems(int page)
     {
         log.info("getProblemTableItems(" + page + ")");
@@ -415,7 +432,8 @@ public class ProblemService
         }
     }
 
-    private void expireAllSubmissionsByProblemEntity(ProblemEntity problemEntity)
+    @Transactional(rollbackFor = Exception.class)
+    protected void expireAllSubmissionsByProblemEntity(ProblemEntity problemEntity)
     {
         //将之前的提交结果改为过期
         List<SubmissionEntity> submissionEntityList = submissionRepository.findAllByProblemEntity(problemEntity);

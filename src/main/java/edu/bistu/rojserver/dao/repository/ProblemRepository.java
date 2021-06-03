@@ -2,6 +2,7 @@ package edu.bistu.rojserver.dao.repository;
 
 import edu.bistu.rojserver.dao.ProblemStatus;
 import edu.bistu.rojserver.dao.ProblemTableItem;
+import edu.bistu.rojserver.dao.entity.ContestEntity;
 import edu.bistu.rojserver.dao.entity.ProblemEntity;
 import edu.bistu.rojserver.dao.entity.UserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,10 +23,17 @@ public interface ProblemRepository extends JpaRepository<ProblemEntity, Long>
     @Query(value = "select problem.problem_id as problemID, title as title, difficulty as difficulty, count(distinct submission.user_id) as acceptedSubmissionNumber from problem left join submission on problem.problem_id = submission.problem_id and submission.problem_status > 2 and result = 7 where problem.problem_status = 4 group by problem.problem_id order by problem.problem_id desc limit ?1, ?2", nativeQuery = true)
     List<ProblemTableItem> findProblemTableItems(int offset, int count);
 
+    @Query(value = "select problem.problem_id as problemID, title as title, difficulty as difficulty, count(distinct submission.user_id) as acceptedSubmissionNumber from problem left join submission on problem.problem_id = submission.problem_id and submission.problem_status = 3 and result = 7 where problem.problem_status = 3 and problem.contest_id = ?1 group by problem.problem_id", nativeQuery = true)
+    List<ProblemTableItem> findInContestProblemTableItems(long contestID);
+
     int countByProblemStatus(ProblemStatus problemStatus);
 
     @Query(value = "select user_id from problem where problem_id = ?1", nativeQuery = true)
     Long getAuthorID(Long problemID);
+
+    List<ProblemEntity> findAllByProblemStatus(ProblemStatus problemStatus);
+
+    List<ProblemEntity> findAllByContestEntity(ContestEntity contestEntity);
 
     boolean existsByProblemID(Long problemID);
 }

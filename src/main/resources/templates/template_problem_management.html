@@ -39,7 +39,7 @@
                         <a class="nav-link custom-nav-link" th:href="@{/problem/list}">题库</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link custom-nav-link" href="#">竞赛</a>
+                        <a class="nav-link custom-nav-link" th:href="@{/contest/list}">竞赛</a>
                     </li>
                 </ul>
             </div>
@@ -56,6 +56,9 @@
         </li>
         <li class="nav-item" sec:authorize="hasAnyAuthority('PROBLEM_AUTHOR', 'CONTEST_ORGANIZER', 'ROOT')">
             <a class="nav-link active fs-6 fw-bold" aria-current="page" th:href="@{/management/problem}" style="background-color: #b9b9b9">题库管理</a>
+        </li>
+        <li class="nav-item" sec:authorize="hasAnyAuthority('CONTEST_ORGANIZER', 'ROOT')">
+            <a class="nav-link fs-6 fw-bold" th:href="@{/management/contest}">比赛管理</a>
         </li>
         <li class="nav-item" sec:authorize="hasAnyAuthority('ROOT')">
             <a class="nav-link fs-6 fw-bold" th:href="@{/management/language}">判题语言管理</a>

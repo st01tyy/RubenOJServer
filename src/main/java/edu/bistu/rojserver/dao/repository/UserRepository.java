@@ -21,4 +21,6 @@ public interface UserRepository extends JpaRepository<UserEntity, Long>
 
     @Query(value = "select * from user_information", nativeQuery = true)
     Slice<UserEntity> findUsers(Pageable pageable);
+
+    UserEntity getByUserID(Long userID);
 }

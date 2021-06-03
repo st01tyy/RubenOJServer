@@ -41,6 +41,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter
                 .authorizeRequests()
                 .antMatchers("/", "/login", "/register")
                 .permitAll()
+                .antMatchers("/contest", "/contest/**")
+                .hasAnyAuthority("USER", "PROBLEM_AUTHOR", "CONTEST_ORGANIZER", "ROOT")
                 .antMatchers("/management/problem")
                 .hasAnyAuthority("PROBLEM_AUTHOR", "CONTEST_ORGANIZER", "ROOT")
                 .antMatchers("/management/contest")

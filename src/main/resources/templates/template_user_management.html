@@ -57,6 +57,9 @@
         <li class="nav-item" sec:authorize="hasAnyAuthority('PROBLEM_AUTHOR', 'CONTEST_ORGANIZER', 'ROOT')">
             <a class="nav-link fs-6 fw-bold" th:href="@{/management/problem}">题库管理</a>
         </li>
+        <li class="nav-item" sec:authorize="hasAnyAuthority('CONTEST_ORGANIZER', 'ROOT')">
+            <a class="nav-link fs-6 fw-bold" th:href="@{/management/contest}">比赛管理</a>
+        </li>
         <li class="nav-item" sec:authorize="hasAnyAuthority('ROOT')">
             <a class="nav-link fs-6 fw-bold" th:href="@{/management/language}">判题语言管理</a>
         </li>

@@ -34,10 +34,17 @@ public class ProblemEntity
     @Column(nullable = false)
     private Integer difficulty = 1200;
 
+    @Column(nullable = false)
+    private Integer score = 500;
+
     @Column(nullable = false, name = "problem_status")
     private ProblemStatus problemStatus = ProblemStatus.EDITING;
 
     @ManyToOne
     @JoinColumn(name = "user_id", referencedColumnName = "user_id")
     private UserEntity author;
+
+    @ManyToOne
+    @JoinColumn(name = "contest_id", referencedColumnName = "contest_id")
+    private ContestEntity contestEntity;
 }
